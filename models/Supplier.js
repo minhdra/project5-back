@@ -12,10 +12,10 @@ const supplierSchema = new mongoose.Schema(
       max: 255,
     },
     phone: {
-      type: Number,
+      type: String,
     },
     address: {
-      type: Object,
+      type: String,
     },
     email: {
       type: String,

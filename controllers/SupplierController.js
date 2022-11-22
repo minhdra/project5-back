@@ -9,9 +9,10 @@ class SupplierController {
     let sort = req.body.sortName;
     const myQuery = {
       id: { $exists: true },
-      supplier_name: { $regex: `.*${req.body.supplier_name}.*`, $options: 'i' },
-      phone: { $regex: `.*${req.body.phone}.*`, $options: 'i' },
-      email: { $regex: `.*${req.body.email}.*`, $options: 'i' },
+      supplier_name: { $regex: `.*${req.body.supplier_name ?? ''}.*`, $options: 'i' },
+      phone: { $regex: `.*${req.body.phone ?? ''}.*`, $options: 'i' },
+      address: { $regex: `.*${req.body.address ?? ''}.*`, $options: 'i' },
+      email: { $regex: `.*${req.body.email ?? ''}.*`, $options: 'i' },
       active: true,
     };
 

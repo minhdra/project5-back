@@ -10,7 +10,7 @@ class CategorySubController {
     let sort = {};
     const myQuery = {
       id: { $exists: true },
-      sub_category_name: { $regex: `.*${req.body.sub_category_name}.*`, $options: 'i' },
+      sub_category_name: { $regex: `.*${req.body.sub_category_name ?? ''}.*`, $options: 'i' },
       active: true,
     };
 
@@ -35,9 +35,52 @@ class CategorySubController {
     CategorySub.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
-      .then((categorySubs) => res.json(categorySubs))
+      .then((categorySubs) => {
+        categorySubs.forEach(item => item.category = item.category[0]);
+        return res.status(200).json(categorySubs);
+      })
       .catch((err) => res.status(400).json({message: 'Có lỗi xảy ra!'}));
   }
+
+  // Get all for menu
+  // searchForMenu(req, res) {
+  //   // let page = req.body.page || 1;
+  //   // let pageSize = req.body.pageSize || 10;
+  //   let sortName = req.body.sortName;
+  //   let sort = {};
+  //   const myQuery = {
+  //     id: { $exists: true },
+  //     sub_category_name: { $regex: `.*${req.body.sub_category_name ?? ''}.*`, $options: 'i' },
+  //     active: true,
+  //   };
+
+  //   let aggregateQuery = [
+  //     { $match: myQuery },
+  //     {
+  //       $graphLookup: {
+  //         from: 'categories', // Match with to collection what want to search
+  //         startWith: '$category', // Name of array (origin)
+  //         connectFromField: 'category', // Field of array
+  //         connectToField: 'id', // from which field it will match
+  //         as: 'category', // Add or replace field in origin collection
+  //       },
+  //     },
+  //   ];
+
+  //   if (sortName) {
+  //     if (sortName) sort.sub_category_name = sortName;
+  //     aggregateQuery.push({ $sort: sort });
+  //   }
+
+  //   CategorySub.aggregate(aggregateQuery)
+  //     // .skip(page * pageSize - pageSize)
+  //     // .limit(pageSize)
+  //     .then((categorySubs) => {
+  //       categorySubs.forEach(item => item.category = item.category[0]);
+  //       return res.status(200).json(categorySubs);
+  //     })
+  //     .catch((err) => res.status(400).json({message: 'Có lỗi xảy ra!'}));
+  // }
 
   // Get by id
   getById(req, res) {
@@ -57,7 +100,10 @@ class CategorySubController {
     CategorySub.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
-      .then((categorySubs) => res.json(categorySubs[0]))
+      .then((categorySubs) => {
+        categorySubs[0].category = categorySubs[0].category[0];
+        return res.status(200).json(categorySubs[0]);
+      })
       .catch((err) => res.status(400).json({message: 'Có lỗi xảy ra!'}));
   }
 
@@ -79,7 +125,10 @@ class CategorySubController {
     CategorySub.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
-      .then((categorySubs) => res.json(categorySubs[0]))
+      .then((categorySubs) => {
+        categorySubs[0].category = categorySubs[0].category[0];
+        return res.status(200).json(categorySubs[0]);
+      })
       .catch((err) => res.status(400).json({message: 'Có lỗi xảy ra!'}));
   }
 

@@ -1,5 +1,6 @@
 const Customer = require('../models/Customer');
 const { ObjectId } = require('mongodb');
+const User = require('../models/User');
 
 class CustomerController {
   // Get all
@@ -10,10 +11,10 @@ class CustomerController {
     let sort = {};
     const myQuery = {
       id: { $exists: true },
-      first_name: { $regex: `.*${req.body.first_name}.*`, $options: 'i' },
-      last_name: { $regex: `.*${req.body.last_name}.*`, $options: 'i' },
-      email: { $regex: `.*${req.body.email}.*`, $options: 'i' },
-      phone: { $regex: `.*${req.body.phone}.*`, $options: 'i' },
+      first_name: { $regex: `.*${req.body.first_name ?? ''}.*`, $options: 'i' },
+      last_name: { $regex: `.*${req.body.last_name ?? ''}.*`, $options: 'i' },
+      email: { $regex: `.*${req.body.email ?? ''}.*`, $options: 'i' },
+      phone: { $regex: `.*${req.body.phone ?? ''}.*`, $options: 'i' },
       active: true,
     };
 
@@ -24,7 +25,7 @@ class CustomerController {
           from: 'users', // Match with to collection what want to search
           startWith: '$user', // Name of array (origin)
           connectFromField: 'user', // Field of array
-          connectToField: 'id', // from which field it will match
+          connectToField: '_id', // from which field it will match
           as: 'user', // Add or replace field in origin collection
         },
       },
@@ -38,8 +39,11 @@ class CustomerController {
     Customer.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
-      .then((customers) => res.json(customers))
-      .catch((err) => res.status(400).json({message: 'Có lỗi xảy ra!'}));
+      .then((customers) => {
+        customers.forEach((customer) => (customer.user = customer.user[0]));
+        return res.status(200).json(customers);
+      })
+      .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
   // Get by id
@@ -60,8 +64,11 @@ class CustomerController {
     Customer.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
-      .then((customers) => res.json(customers[0]))
-      .catch((err) => res.status(400).json({message: 'Có lỗi xảy ra!'}));
+      .then((customers) => {
+        customers[0].user = customers[0].user[0];
+        return res.json(customers[0]);
+      })
+      .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
   // Get by id
@@ -82,8 +89,11 @@ class CustomerController {
     Customer.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
-      .then((customers) => res.json(customers[0]))
-      .catch((err) => res.status(400).json({message: 'Có lỗi xảy ra!'}));
+      .then((customers) => {
+        customers[0].user = customers[0].user[0];
+        return res.json(customers[0]);
+      })
+      .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
   // Get by path
@@ -104,8 +114,11 @@ class CustomerController {
     Customer.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
-      .then((customers) => res.json(customers[0]))
-      .catch((err) => res.status(400).json({message: 'Có lỗi xảy ra!'}));
+      .then((customers) => {
+        customers[0].user = customers[0].user[0];
+        return res.json(customers[0]);
+      })
+      .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
   // update
@@ -137,17 +150,27 @@ class CustomerController {
       .then((customer) => {
         if (customer) {
           customer.active = false;
-          customer.save((err) => {
+          customer.save(async (err) => {
             if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
-            else
-              return res
-                .status(200)
-                .json({message: `Cập nhật thành công!`});
+            else {
+              await deleteAccount(customer.user);
+              return res.status(200).json({ message: `Cập nhật thành công!` });
+            }
           });
         } else return res.status(404).json({ message: 'Không tìm thấy!' });
       })
       .catch((err) => res.status(404).json({ message: 'Có lỗi xảy ra!' }));
   }
+}
+
+function deleteAccount(user_id) {
+  const myQuery = { _id: ObjectId(user_id), active: true };
+  User.findOne(myQuery).then((user) => {
+    if (user) {
+      user.active = false;
+      user.save();
+    }
+  });
 }
 
 module.exports = new CustomerController();

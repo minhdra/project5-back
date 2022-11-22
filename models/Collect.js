@@ -1,26 +1,36 @@
 const mongoose = require('mongoose');
 
-const categorySchema = new mongoose.Schema(
+const collectSchema = new mongoose.Schema(
   {
     id: {
       type: Number,
       required: true,
     },
-    category_name: {
+    collect_name: {
       type: String,
       required: true,
       max: 255,
     },
-    description: {
+    order: {
+      type: Number,
+    },
+    status: {
+      type: Boolean,
+      default: true,
+    },
+    path: {
+      type: String,
+      required: true,
+    },
+    hashtag: {
       type: String,
     },
     thumbnail: {
       type: String,
-      require: true,
+      required: true,
     },
-    path: {
+    description: {
       type: String,
-      require: true,
     },
     active: {
       type: Boolean,
@@ -33,4 +43,4 @@ const categorySchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model('categories', categorySchema);
+module.exports = mongoose.model('collects', collectSchema);

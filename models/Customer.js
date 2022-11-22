@@ -33,7 +33,7 @@ const customerSchema = new mongoose.Schema(
       type: Object,
     },
     phone: {
-      type: Number,
+      type: String,
     },
     carts: {
       type: Array,

@@ -9,9 +9,9 @@ class SlideController {
     let sort = req.body.sort;
     const myQuery = {
       id: { $exists: true },
-      title: { $regex: `.*${req.body.title}.*`, $options: 'i' },
-      contentLink: { $regex: `.*${req.body.contentLink}.*`, $options: 'i' },
-      redirectTo: { $regex: `.*${req.body.redirectTo}.*`, $options: 'i' },
+      title: { $regex: `.*${req.body.title ?? ''}.*`, $options: 'i' },
+      contentLink: { $regex: `.*${req.body.contentLink ?? ''}.*`, $options: 'i' },
+      redirectTo: { $regex: `.*${req.body.redirectTo ?? ''}.*`, $options: 'i' },
       active: true,
     };
 

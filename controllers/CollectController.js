@@ -1,32 +1,34 @@
-const Brand = require('../models/Brand');
+const Collect = require('../models/Collect');
 const { ObjectId } = require('mongodb');
 
-class BrandController {
+class CollectController {
   // Get all
   search(req, res) {
     // let page = req.body.page || 1;
     // let pageSize = req.body.pageSize || 10;
     let sort = req.body.sortName;
+    const limit = req.body.limit;
     const myQuery = {
       id: { $exists: true },
-      brand_name: { $regex: `.*${req.body.brand_name ?? ''}.*`, $options: 'i' },
+      collect_name: { $regex: `.*${req.body.collect_name ?? ''}.*`, $options: 'i' },
       active: true,
     };
 
-    Brand.find(myQuery)
-      .sort(sort ? { brand_name: sort } : '')
+    Collect.find(myQuery)
+      .sort({ status: -1, order: 1 })
+      .limit(limit ?? limit)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
-      .then((brands) => res.json(brands))
+      .then((collects) => res.json(collects))
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
   // Get by id
   getById(req, res) {
     const myQuery = { _id: ObjectId(req.params._id), active: true };
-    Brand.findOne(myQuery)
-      .then((brand) => {
-        if (brand) return res.json(brand);
+    Collect.findOne(myQuery)
+      .then((collect) => {
+        if (collect) return res.json(collect);
         return res.status(404).json({
           message: 'Không tìm thấy',
         });
@@ -37,9 +39,9 @@ class BrandController {
   // Get by path
   getByPath(req, res) {
     const myQuery = { path: req.params.path, active: true };
-    Brand.findOne(myQuery)
-      .then((brand) => {
-        if (brand) return res.json(brand);
+    Collect.findOne(myQuery)
+      .then((collect) => {
+        if (collect) return res.json(collect);
         return res.status(404).json({
           message: 'Không tìm thấy',
         });
@@ -49,19 +51,22 @@ class BrandController {
 
   // Create
   create(req, res) {
-    let brand;
-    Brand.find()
+    let collect;
+    Collect.find()
       .sort({ id: -1 })
       .limit(1)
       .then((data) => {
         const newId = data.length > 0 ? data[0].id + 1 : 1;
-        brand = new Brand({
-          id: newId,
-          brand_name: req.body.brand_name,
-          path: req.body.path,
-          description: req.body.description,
-        });
-        brand.save((err) => {
+        collect = new Collect();
+        collect.id = newId,
+        collect.collect_name = req.body.collect_name;
+        collect.path = req.body.path;
+        collect.thumbnail = req.body.thumbnail;
+        collect.description = req.body.description;
+        collect.order = req.body.order;
+        collect.status = req.body.status;
+        collect.hashtag = req.body.hashtag;
+        collect.save((err) => {
           if (err) {
             return res.status(400).json({ message: 'Có lỗi xảy ra!' });
           } else {
@@ -73,14 +78,18 @@ class BrandController {
 
   // update
   async update(req, res) {
-    Brand.findOne({ _id: ObjectId(req.body._id) })
-      .then((brand) => {
-        if (!brand)
+    Collect.findOne({ _id: ObjectId(req.body._id) })
+      .then((collect) => {
+        if (!collect)
           return res.status(404).json({ message: 'Không tìm thấy!' });
-        brand.brand_name = req.body.brand_name;
-        brand.path = req.body.path;
-        brand.description = req.body.description;
-        brand.save((err) => {
+        collect.collect_name = req.body.collect_name;
+        collect.path = req.body.path;
+        collect.thumbnail = req.body.thumbnail;
+        collect.description = req.body.description;
+        collect.order = req.body.order;
+        collect.status = req.body.status;
+        collect.hashtag = req.body.hashtag;
+        collect.save((err) => {
           if (err) return res.status(500).json({ message: err.message });
           else res.status(200).json({ message: 'Cập nhật thành công!' });
         });
@@ -91,16 +100,16 @@ class BrandController {
   // Delete
   delete(req, res) {
     const myQuery = { id: req.body.id, active: true };
-    Brand.findOne(myQuery)
-      .then((brand) => {
-        if (brand) {
-          brand.active = false;
-          brand.save((err) => {
+    Collect.findOne(myQuery)
+      .then((collect) => {
+        if (collect) {
+          collect.active = false;
+          collect.save((err) => {
             if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
             else
               return res
                 .status(200)
-                .json(`Successfully deleted brand: ${brand.name}`);
+                .json(`Successfully deleted collect: ${collect.collect_name}`);
           });
         } else return res.status(404).json({ message: 'Không tìm thấy!' });
       })
@@ -108,4 +117,4 @@ class BrandController {
   }
 }
 
-module.exports = new BrandController();
+module.exports = new CollectController();

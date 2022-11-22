@@ -10,9 +10,9 @@ class PaymentController {
     let sort = {};
     const myQuery = {
       id: { $exists: true },
-      payment_type: { $regex: `.*${req.body.payment_type}.*`, $options: 'i' },
-      provider: { $regex: `.*${req.body.provider}.*`, $options: 'i' },
-      account_no: { $regex: `.*${req.body.account_no}.*`, $options: 'i' },
+      payment_type: { $regex: `.*${req.body.payment_type ?? ''}.*`, $options: 'i' },
+      provider: { $regex: `.*${req.body.provider ?? ''}.*`, $options: 'i' },
+      account_no: { $regex: `.*${req.body.account_no ?? ''}.*`, $options: 'i' },
       active: true,
     };
 

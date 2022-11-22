@@ -1,5 +1,6 @@
 const Category = require('../models/Category');
 const { ObjectId } = require('mongodb');
+const CategorySub = require('../models/CategorySub');
 
 class CategoryController {
   // Get all
@@ -9,7 +10,10 @@ class CategoryController {
     let sort = req.body.sortName;
     const myQuery = {
       id: { $exists: true },
-      category_name: { $regex: `.*${req.body.category_name}.*`, $options: 'i' },
+      category_name: {
+        $regex: `.*${req.body.category_name ?? ''}.*`,
+        $options: 'i',
+      },
       active: true,
     };
 
@@ -19,6 +23,57 @@ class CategoryController {
       // .limit(pageSize)
       .then((categories) => res.json(categories))
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
+  }
+
+  // Get all for menu
+  async searchForMenu(req, res) {
+    // let page = req.body.page || 1;
+    // let pageSize = req.body.pageSize || 10;
+    let sort = req.body.sortName;
+    const myQuery = {
+      id: { $exists: true },
+      category_name: {
+        $regex: `.*${req.body.category_name ?? ''}.*`,
+        $options: 'i',
+      },
+      active: true,
+    };
+
+    Category.aggregate([
+      { $match: myQuery },
+      {
+        $lookup: {
+          from: 'sub_categories',
+          localField: 'id',
+          foreignField: 'category',
+          as: 'subs',
+        },
+      },
+    ]).then((categories) => res.json(categories));
+  }
+
+  // Get by path
+  getByPath(req, res) {
+    const myQuery = {
+      id: { $exists: true },
+      path: {
+        $regex: `.*${req.body.path}.*`,
+        $options: 'i',
+      },
+      active: true,
+    };
+
+    Category.aggregate([
+      { $match: myQuery },
+      {
+        $lookup: {
+          from: 'sub_categories',
+          localField: 'id',
+          foreignField: 'category',
+          as: 'subs',
+        },
+      },
+    ]).then((categories) => res.json(categories[0]));
   }
 
   // Get by id
@@ -42,11 +97,12 @@ class CategoryController {
       .limit(1)
       .then((data) => {
         const newId = data.length > 0 ? data[0].id + 1 : 1;
-        category = new Category({
-          id: newId,
-          category_name: req.body.category_name,
-          description: req.body.description,
-        });
+        category = new Category();
+        category.id = newId;
+        category.category_name = req.body.category_name;
+        category.description = req.body.description;
+        category.thumbnail = req.body.thumbnail;
+        category.path = req.body.path;
         category.save((err) => {
           if (err) {
             return res.status(400).json({ message: 'Có lỗi xảy ra!' });
@@ -65,6 +121,8 @@ class CategoryController {
           return res.status(404).json({ message: 'Không tìm thấy!' });
         category.category_name = req.body.category_name;
         category.description = req.body.description;
+        category.thumbnail = req.body.thumbnail;
+        category.path = req.body.path;
         category.save((err) => {
           if (err) return res.status(500).json({ message: err.message });
           else res.status(200).json({ message: 'Cập nhật thành công!' });

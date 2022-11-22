@@ -18,7 +18,7 @@ class UserController {
     let sort = req.body.sort;
     const myQuery = {
       id: { $exists: true },
-      username: { $regex: `.*${req.body.username}.*`, $options: 'i' },
+      username: { $regex: `.*${req.body.username ?? ''}.*`, $options: 'i' },
       active: true,
     };
     User.find(myQuery)
@@ -58,6 +58,9 @@ class UserController {
 
     if (!checkPassword)
       return res.status(422).json('Tài khoản hoặc mật khẩu không chính xác!');
+    
+    if (req.body.role !== user.role)
+      return res.status(422).json('Tài khoản của bạn không phù hợp với chức năng này!');
 
     const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, {
       expiresIn: 60 * 60 * 24,
@@ -100,7 +103,7 @@ class UserController {
           if (err) {
             return res.status(400).json({ message: 'Không thể đăng ký!' });
           } else {
-            await this.createUser(user.role, user);
+            await createUser(user.role, user);
 
             return await res
               .status(200)
@@ -140,7 +143,7 @@ class UserController {
           user.save(async (err, user) => {
             if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
             else {
-              await this.deleteUser(user);
+              await deleteUser(user);
               return await res
                 .status(200)
                 .json({ message: 'Cập nhật thành công!' });
@@ -152,48 +155,6 @@ class UserController {
   }
 
   // create user
-  createUser(role, user) {
-    if (role === 0) {
-      let customer;
-      Customer.find()
-        .sort({ id: -1 })
-        .limit(1)
-        .then((data) => {
-          const newId = data.length > 0 ? data[0].id + 1 : 1;
-          customer = new Customer({
-            id: newId,
-            user: ObjectId(user._id),
-            path: user.username,
-            carts: [],
-          });
-          customer.save(async (err, customer) => {
-            if (err) {
-              return res.status(400).json({ message: 'Có lỗi xảy ra!' });
-            } else
-              return res.status(200).json({ message: 'Cập nhật thành công!' });
-          });
-        });
-    } else {
-      let staff;
-      Staff.find()
-        .sort({ id: -1 })
-        .limit(1)
-        .then((data) => {
-          const newId = data.length > 0 ? data[0].id + 1 : 1;
-          staff = new Customer({
-            id: newId,
-            user: ObjectId(user._id),
-          });
-          staff.save((err) => {
-            if (err) {
-              return res.status(400).json({ message: 'Không tìm thấy!' });
-            } else {
-              return res.status(200).json({ message: 'Cập nhật thành công!' });
-            }
-          });
-        });
-    }
-  }
 
   // createCart(customer) {
   //   let cart;
@@ -217,44 +178,6 @@ class UserController {
   // }
 
   // delete user
-  deleteUser(user) {
-    const myQuery = { user: ObjectId(user._id) };
-    if (user.role === 0) {
-      Customer.findOne(myQuery)
-        .then((customer) => {
-          if (customer) {
-            customer.active = false;
-            customer.save((err) => {
-              if (err)
-                return res.status(400).json({ message: 'Có lỗi xảy ra!' });
-              else {
-                return res
-                  .status(200)
-                  .json({ message: 'Cập nhật thành công!' });
-              }
-            });
-          } else return res.status(404).json({ message: 'Không tìm thấy!' });
-        })
-        .catch((err) => res.status(404).json({ message: 'Có lỗi xảy ra!' }));
-    } else {
-      Staff.findOne(myQuery)
-        .then((staff) => {
-          if (staff) {
-            staff.active = false;
-            staff.save((err) => {
-              if (err)
-                return res.status(400).json({ message: 'Có lỗi xảy ra!' });
-              else {
-                return res
-                  .status(200)
-                  .json({ message: 'Cập nhật thành công!' });
-              }
-            });
-          } else return res.status(404).json({ message: 'Không tìm thấy!' });
-        })
-        .catch((err) => res.status(404).json({ message: 'Có lỗi xảy ra!' }));
-    }
-  }
 
   // deleteCart(customer) {
   //   const myQuery = { customer: ObjectId(customer._id) };
@@ -272,6 +195,69 @@ class UserController {
   //     })
   //     .catch((err) => res.status(404).json({ message: 'Có lỗi xảy ra!' }));
   // }
+}
+
+function createUser(role, user) {
+  if (role === 0) {
+    let customer;
+    Customer.find()
+      .sort({ id: -1 })
+      .limit(1)
+      .then((data) => {
+        const newId = data.length > 0 ? data[0].id + 1 : 1;
+        customer = new Customer({
+          id: newId,
+          user: ObjectId(user._id),
+          path: user.username,
+          carts: [],
+          first_name: '',
+          last_name: '',
+          phone: '',
+          email: '',
+          avatar: '',
+          address: {},
+        });
+        customer.save();
+      });
+  } else {
+    let staff;
+    Staff.find()
+      .sort({ id: -1 })
+      .limit(1)
+      .then((data) => {
+        const newId = data.length > 0 ? data[0].id + 1 : 1;
+        staff = new Staff({
+          id: newId,
+          user: ObjectId(user._id),
+          first_name: '',
+          last_name: '',
+          phone: '',
+          email: '',
+          avatar: '',
+          address: {},
+        });
+        staff.save();
+      });
+  }
+}
+
+function deleteUser(user) {
+  const myQuery = { user: ObjectId(user._id) };
+  if (user.role === 0) {
+    Customer.findOne(myQuery).then((customer) => {
+      if (customer) {
+        customer.active = false;
+        customer.save();
+      }
+    });
+  } else {
+    Staff.findOne(myQuery).then((staff) => {
+      if (staff) {
+        staff.active = false;
+        staff.save();
+      }
+    });
+  }
 }
 
 module.exports = new UserController();

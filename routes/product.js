@@ -5,8 +5,12 @@ var verifyToken = require('../middleware/verifyToken');
 
 /* GET users listing. */
 router.get('/getById/:_id', ProductController.getById);
+router.get('/get-single/:path', ProductController.getByPathClient);
 router.get('/getByPath/:path', ProductController.getByPath);
 router.post('/search', ProductController.search);
+router.post('/searchProducts', ProductController.searchClientProducts);
+router.post('/searchFeaturedProducts', ProductController.searchFeaturedProducts);
+router.post('/searchSellingProducts', ProductController.searchSellingProducts);
 router.post('/searchBySubCategory', ProductController.searchBySubCategory);
 router.post('/create', verifyToken, ProductController.create);
 router.post('/delete', verifyToken, ProductController.delete);

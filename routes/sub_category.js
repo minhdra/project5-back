@@ -5,7 +5,7 @@ var verifyToken = require('../middleware/verifyToken');
 
 /* GET users listing. */
 router.get('/getById/:_id', CategorySubController.getById);
-router.get('/getById/:path', CategorySubController.getByPath);
+router.get('/getByPath/:path', CategorySubController.getByPath);
 router.post('/search', CategorySubController.search);
 router.post('/create', verifyToken, CategorySubController.create);
 router.post('/delete', verifyToken, CategorySubController.delete);

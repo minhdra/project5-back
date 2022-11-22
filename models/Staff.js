@@ -6,7 +6,7 @@ const staffSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    user_id: {
+    user: {
       type: mongoose.Types.ObjectId,
       required: true,
     },
@@ -23,7 +23,7 @@ const staffSchema = new mongoose.Schema(
       type: Object,
     },
     phone: {
-      type: Number,
+      type: String,
     },
     first_name: {
       type: String,

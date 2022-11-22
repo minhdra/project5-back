@@ -9,9 +9,7 @@ class DiscountController {
     let sort = req.body.sortName;
     const myQuery = {
       id: { $exists: true },
-      discount_name: { $regex: `.*${req.body.discount_name}.*`, $options: 'i' },
-      phone: { $regex: `.*${req.body.phone}.*`, $options: 'i' },
-      email: { $regex: `.*${req.body.email}.*`, $options: 'i' },
+      discount_name: { $regex: `.*${req.body.discount_name ?? ''}.*`, $options: 'i' },
       active: true,
     };
 

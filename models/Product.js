@@ -30,6 +30,12 @@ const productSchema = new mongoose.Schema({
         type: Number,
         require: true,
     },
+    collect: {
+        type: Number,
+    },
+    supplier: {
+        type: Number,
+    },
     origin: {
         type: String,
         require: true,

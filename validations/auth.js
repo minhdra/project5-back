@@ -2,9 +2,9 @@ const Joi = require('joi');
 
 const registerValidator = (data) => {
     const rule = Joi.object({
-        username: Joi.string().min(6).max(225).required(),
-        email: Joi.string().min(6).max(225).required().email(),
-        password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{6,20}$')).required(),
+        ...data,
+        username: Joi.string().label('username').min(6).max(12).required(),
+        password: Joi.string().label('password').pattern(new RegExp('^[a-zA-Z0-9]{6,20}$')).max(20).required(),
     }).messages({
         'string.pattern.base': 'Your {#label} length must be greater than 6 characters. Password cannot contain a special character.'
     })
