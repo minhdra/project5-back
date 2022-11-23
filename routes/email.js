@@ -3,6 +3,7 @@ var router = express.Router();
 var EmailController = require('../controllers/EmailController');
 
 /* GET users listing. */
-router.post('/send', EmailController.sendMail);
+router.post('/send-contact', EmailController.sendMail);
+router.post('/verify-account', EmailController.verifyAccount);
 
 module.exports = router;

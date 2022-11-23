@@ -1,4 +1,4 @@
-const template = (object) => {
+const templateContact = (object) => {
   return `
     <!doctype html>
     <html>
@@ -158,5 +158,6 @@ const template = (object) => {
     </html>
   `;
 };
+module.exports = templateContact;
 
-module.exports = template;
+

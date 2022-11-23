@@ -20,9 +20,6 @@ const customerSchema = new mongoose.Schema(
     last_name: {
       type: String,
     },
-    email: {
-      type: String,
-    },
     birth: {
       type: Date,
     },
@@ -38,6 +35,10 @@ const customerSchema = new mongoose.Schema(
     carts: {
       type: Array,
       required: true,
+      default: [],
+    },
+    delivery_addresses: {
+      type: Array,
       default: [],
     },
     active: {

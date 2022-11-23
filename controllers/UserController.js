@@ -42,12 +42,32 @@ class UserController {
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
+  // Get by id
+  getByIdClient(req, res) {
+    const myQuery = { _id: ObjectId(req.params._id), active: true };
+    User.findOne(myQuery)
+      .then((user) => {
+        if (user)
+          return res.json({
+            username: user.username,
+            email: user.email,
+            _id: user._id,
+          });
+        return res.status(404).json({
+          message: 'Không tìm thấy tài khoản này!',
+        });
+      })
+      .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
+  }
+
   // Login
   async login(req, res) {
-    const user = await User.findOne({
+    const options = {
       username: req.body.username,
       active: true,
-    });
+    };
+    req.body.role >= 2 ? (options.verified = true) : '';
+    const user = await User.findOne(options);
     if (!user)
       return res.status(422).json('Tài khoản hoặc mật khẩu không chính xác!');
 
@@ -58,9 +78,13 @@ class UserController {
 
     if (!checkPassword)
       return res.status(422).json('Tài khoản hoặc mật khẩu không chính xác!');
-    
-    if (req.body.role !== user.role)
-      return res.status(422).json('Tài khoản của bạn không phù hợp với chức năng này!');
+
+    if (
+      (req.body.type === 'admin' && user.role === 2) ||
+      (req.body.type === 'client' && user.role !== 2) ||
+      !req.body.type
+    )
+      return res.status(422).json('Có phải bạn bị lạc?');
 
     const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, {
       expiresIn: 60 * 60 * 24,
@@ -84,33 +108,66 @@ class UserController {
 
         const checkUsernameExist = await User.findOne({
           username: req.body.username,
+          active: true,
         });
 
         if (checkUsernameExist)
           return res.status(422).json({ message: 'Tài khoản đã tồn tại!' });
 
+        const checkEmailExist = await User.findOne({
+          email: req.body.email,
+          active: true,
+        });
+
+        if (checkEmailExist && checkEmailExist?.role >= 2)
+          return res.status(422).json({ message: 'Email đã tồn tại!' });
+
         const salt = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(req.body.password, salt);
 
-        const user = new User({
-          id: newId,
-          username: req.body.username,
-          password: hashPassword,
-          role: req.body.role,
-        });
+        const user = new User();
+        user.id = newId;
+        user.username = req.body.username;
+        user.password = hashPassword;
+        user.email = req.body.email;
+        user.role = req.body.role;
 
         user.save(async (err, user) => {
           if (err) {
-            return res.status(400).json({ message: 'Không thể đăng ký!' });
+            return res.status(400).json({ message: 'Hệ thống đang có lỗi!' });
           } else {
             await createUser(user.role, user);
 
             return await res
               .status(200)
-              .json({ message: 'Đăng ký thành công!' });
+              .json({ message: 'Đăng ký thành công!', user });
           }
         });
       });
+  }
+
+  // Verify
+  async verifyUser(req, res) {
+    const myQuery = { _id: ObjectId(req.body._id), active: true };
+
+    User.findOne(myQuery)
+      .then((user) => {
+        if (!user)
+          return res
+            .status(404)
+            .json({ message: 'Không tìm thấy tài khoản này!' });
+        if (user.verified)
+          return res
+            .status(422)
+            .json({ message: 'Tài khoản của bạn đã được xác thực rồi.' });
+
+        user.verified = true;
+        user.save((err) => {
+          if (err) return res.status(404).json({ message: 'Có lỗi xảy ra!' });
+          return res.status(200).json({ message: 'Xác thực thành công!' });
+        });
+      })
+      .catch((err) => res.status(500).json({ message: 'Có lỗi xảy ra!' }));
   }
 
   // Change password
@@ -128,8 +185,11 @@ class UserController {
 
     user.password = hashPassword;
     user.save((err) => {
-      if (err) return res.status(400).json('Có lỗi xảy ra!');
-      else return res.status(200).json('Thay đổi mật khẩu thành công!');
+      if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
+      else
+        return res
+          .status(200)
+          .json({ message: 'Thay đổi mật khẩu thành công!' });
     });
   }
 
@@ -198,7 +258,7 @@ class UserController {
 }
 
 function createUser(role, user) {
-  if (role === 0) {
+  if (role === 2) {
     let customer;
     Customer.find()
       .sort({ id: -1 })
@@ -213,9 +273,9 @@ function createUser(role, user) {
           first_name: '',
           last_name: '',
           phone: '',
-          email: '',
           avatar: '',
           address: {},
+          delivery_addresses: [],
         });
         customer.save();
       });
@@ -232,7 +292,6 @@ function createUser(role, user) {
           first_name: '',
           last_name: '',
           phone: '',
-          email: '',
           avatar: '',
           address: {},
         });

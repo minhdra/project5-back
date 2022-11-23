@@ -1,24 +1,52 @@
 const Joi = require('joi');
 
 const registerValidator = (data) => {
-    const rule = Joi.object({
-        ...data,
-        username: Joi.string().label('username').min(6).max(12).required(),
-        password: Joi.string().label('password').pattern(new RegExp('^[a-zA-Z0-9]{6,20}$')).max(20).required(),
-    }).messages({
-        'string.pattern.base': 'Your {#label} length must be greater than 6 characters. Password cannot contain a special character.'
-    })
+  const rule = Joi.object({
+    ...data,
+    username: Joi.string()
+      .regex(/^(?:[A-Z\d][A-Z\d_-]{5,10})$/i)
+      .required()
+      .messages({
+        'string.pattern.base':
+          'Tài khoản phải có độ dài 5-10 và không có ký tự đặc biệt.',
+      }),
+    email: Joi.string()
+      .regex(/^([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4})$/i)
+      .required()
+      .messages({
+        'string.pattern.base': 'Không đúng định dạng email.',
+      }),
+    password: Joi.string()
+      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,12}$/i)
+      .required()
+      .messages({
+        'string.pattern.base':
+          'Mật khẩu phải có độ dài 6-12, gồm cả ký tự, số và ký tự đặc biệt.',
+      }),
+  }).messages({
+    'string.empty': 'Không thể để trống',
+    'any.required': 'Không thể để trống',
+  });
 
-    return rule.validate(data);
-}
+  return rule.validate(data, { abortEarly: false });
+};
 
 const changePasswordValidator = (data) => {
-    const rule = Joi.object({
-        password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{6,20}$')).required(),
-    });
+  const rule = Joi.object({
+    password: Joi.string()
+      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,12}$/i)
+      .required()
+      .messages({
+        'string.pattern.base':
+          'Mật khẩu phải có độ dài 6-12, gồm cả ký tự, số và ký tự đặc biệt.',
+      }),
+  }).messages({
+    'string.empty': 'Không thể để trống',
+    'any.required': 'Không thể để trống',
+  });
 
-    return rule.validate(data);
-}
+  return rule.validate(data);
+};
 
 module.exports.registerValidator = registerValidator;
 module.exports.changePasswordValidator = changePasswordValidator;

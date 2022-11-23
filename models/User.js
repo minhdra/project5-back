@@ -18,10 +18,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    // default 2 is customer
     role: {
       type: Number,
       required: true,
-      default: 0,
+      default: 2,
+    },
+    verified: {
+      type: Boolean,
+      required: true,
+      default: false,
     },
     active: {
       type: Boolean,

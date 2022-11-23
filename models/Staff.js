@@ -10,9 +10,6 @@ const staffSchema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       required: true,
     },
-    email: {
-      type: String,
-    },
     birth: {
       type: Date,
     },

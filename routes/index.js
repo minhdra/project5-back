@@ -31,7 +31,7 @@ function directionRoute(app) {
   app.use('/api/user', userRouter);
   app.use('/api/slide', slideRouter);
   app.use('/api/image', imageRouter);
-  app.use('/api/contact', mailRouter);
+  app.use('/api/email', mailRouter);
 }
 
 module.exports = directionRoute;
