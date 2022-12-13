@@ -2,6 +2,7 @@ var express = require('express');
 var router = express.Router();
 var UserController = require('../controllers/UserController');
 var verifyToken = require('../middleware/verifyToken');
+var verifyTokenClient = require('../middleware/verifyTokenClient');
 
 /* GET users listing. */
 router.get('/:_id', verifyToken, UserController.getById);
@@ -10,6 +11,7 @@ router.post('/search', verifyToken, UserController.search);
 router.post('/register', UserController.register);
 router.post('/login', UserController.login);
 router.post('/verify', UserController.verifyUser);
+router.post('/change-password-client', verifyTokenClient, UserController.changePassword);
 router.post('/change-password', verifyToken, UserController.changePassword);
 router.post('/delete', verifyToken, UserController.delete);
 

@@ -23,6 +23,11 @@ const customerSchema = new mongoose.Schema(
     birth: {
       type: Date,
     },
+    // 2 is default, 0 is male, 1 is female
+    gender: {
+      type: Number,
+      default: 2,
+    },
     avatar: {
       type: String,
     },

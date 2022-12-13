@@ -4,7 +4,7 @@ const templateVerify = require('../template/verifyTemplate');
 
 class EmailController {
   // async..await is not allowed in global scope, must use a wrapper
-  async sendMail(req, res) {
+  async sendMailContact(req, res) {
     let mailHost = 'smtp.gmail.com';
     let mailPort = 587;
     // create reusable transporter object using the default SMTP transport
@@ -27,9 +27,10 @@ class EmailController {
     // send mail with defined transport object
     await transporter
       .sendMail({
-        from: req.body.email, // sender address
+        from: `BOT DRACO <${req.body.email}>`, // sender address
+        replyTo: req.body.email,
         to: process.env.EMAIL_TO, // list of receivers
-        subject: `[${(new Date()).toLocaleDateString("en-US")}]-Need more information`, // Subject line
+        subject: `${req.body.subject}`, // Subject line
         // text: 'Hello world?', // plain text body
         html: templateContact(req.body), // html body
       })
@@ -61,7 +62,6 @@ class EmailController {
     // send mail with defined transport object
     await transporter
       .sendMail({
-
         from: `Draco <${process.env.EMAIL_USER}>`, // sender address
         to: req.body.email, // list of receivers
         subject: `Xác Minh Tài Khoản`, // Subject line

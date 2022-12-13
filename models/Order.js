@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
+require('mongoose-long')(mongoose);
+const {Types: {Long}} = mongoose;
 
 const orderSchema = new mongoose.Schema(
   {
     id: {
-      type: Number,
+      type: Long,
       required: true,
     },
     customer: {
@@ -25,12 +27,33 @@ const orderSchema = new mongoose.Schema(
       type: String,
     },
     total: {
-      type: Number,
-      default: 0,
+      type: String,
+      required: true,
     },
     details: {
       type: Array,
       default: [],
+    },
+    card_type: {
+      type: String,
+    },
+    card_name: {
+      type: String,
+    },
+    card_info: {
+      type: String,
+    },
+    // 0 is delivered successful,
+    // 1 is waiting confirm, 
+    // 2 is confirmed and packaging, 
+    // 3 is packaged and waiting deliverer
+    // 4 is delivering
+    // 5 is canceled
+    // 6 is refunding
+    // 7 is refunded
+    delivery_status: {
+      type: Number,
+      default: 1,
     },
     active: {
       type: Boolean,

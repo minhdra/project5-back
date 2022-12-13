@@ -13,7 +13,7 @@ class StaffController {
       id: { $exists: true },
       first_name: { $regex: `.*${req.body.first_name ?? ''}.*`, $options: 'i' },
       last_name: { $regex: `.*${req.body.last_name ?? ''}.*`, $options: 'i' },
-      email: { $regex: `.*${req.body.email ?? ''}.*`, $options: 'i' },
+      // email: { $regex: `.*${req.body.email ?? ''}.*`, $options: 'i' },
       phone: { $regex: `.*${req.body.phone ?? ''}.*` },
       active: true,
     };
@@ -102,8 +102,9 @@ class StaffController {
         if (!staff) return res.status(404).json({ message: 'Không tìm thấy!' });
         staff.first_name = req.body.first_name;
         staff.last_name = req.body.last_name;
-        staff.email = req.body.email;
+        // staff.email = req.body.email;
         staff.birth = req.body.birth;
+        staff.gender = req.body.gender;
         staff.avatar = req.body.avatar;
         staff.address = req.body.address;
         staff.phone = req.body.phone;

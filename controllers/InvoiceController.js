@@ -53,14 +53,14 @@ class InvoiceController {
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
       .then((invoices) => {
-        invoices.forEach(item => {
+        invoices.forEach((item) => {
           item.product = item.product[0];
           item.staff = item.staff[0];
           item.supplier = item.supplier[0];
         });
         return res.status(200).json(invoices);
       })
-      .catch((err) => res.status(400).json({message: 'Có lỗi xảy ra!'}));
+      .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
   // Get by id
@@ -105,7 +105,7 @@ class InvoiceController {
         invoices[0].supplier = invoices[0].supplier[0];
         return res.status(200).json(invoices[0]);
       })
-      .catch((err) => res.status(400).json({message: 'Có lỗi xảy ra!'}));
+      .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
   // Create
@@ -127,11 +127,9 @@ class InvoiceController {
         });
         invoice.save((err) => {
           if (err) {
-            return res.status(400).json({message: 'Có lỗi xảy ra!'});
+            return res.status(400).json({ message: 'Có lỗi xảy ra!' });
           } else {
-            return res
-              .status(200)
-              .json({ message: 'Cập nhật thành công!' });
+            return res.status(200).json({ message: 'Cập nhật thành công!' });
           }
         });
       });
@@ -154,7 +152,7 @@ class InvoiceController {
           else res.status(200).json({ message: 'Cập nhật thành công!' });
         });
       })
-      .catch((err) => res.status(422).json({message: 'Có lỗi xảy ra!'}));
+      .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));
   }
 
   // Delete
@@ -165,15 +163,13 @@ class InvoiceController {
         if (invoice) {
           invoice.active = false;
           invoice.save((err) => {
-            if (err) return res.status(400).json({message: 'Có lỗi xảy ra!'});
+            if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
             else
-              return res
-                .status(200)
-                .json({ message: 'Cập nhật thành công!' });
+              return res.status(200).json({ message: 'Cập nhật thành công!' });
           });
         } else return res.status(404).json({ message: 'Không tìm thấy!' });
       })
-      .catch((err) => res.status(404).json({message: 'Có lỗi xảy ra!'}));
+      .catch((err) => res.status(404).json({ message: 'Có lỗi xảy ra!' }));
   }
 }
 

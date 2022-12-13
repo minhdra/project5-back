@@ -13,6 +13,10 @@ const staffSchema = new mongoose.Schema(
     birth: {
       type: Date,
     },
+    // true is male, false is female
+    gender: {
+      type: Boolean,
+    },
     avatar: {
       type: String,
     },

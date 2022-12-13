@@ -13,7 +13,7 @@ class CustomerController {
       id: { $exists: true },
       first_name: { $regex: `.*${req.body.first_name ?? ''}.*`, $options: 'i' },
       last_name: { $regex: `.*${req.body.last_name ?? ''}.*`, $options: 'i' },
-      email: { $regex: `.*${req.body.email ?? ''}.*`, $options: 'i' },
+      // email: { $regex: `.*${req.body.email ?? ''}.*`, $options: 'i' },
       phone: { $regex: `.*${req.body.phone ?? ''}.*`, $options: 'i' },
       active: true,
     };
@@ -110,6 +110,14 @@ class CustomerController {
           as: 'user', // Add or replace field in origin collection
         },
       },
+      {
+        $lookup: {
+          from: 'orders',
+          localField: '_id',
+          foreignField: 'customer',
+          as: 'orders',
+        },
+      },
     ];
     Customer.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
@@ -122,6 +130,30 @@ class CustomerController {
   }
 
   // update
+  async updateClient(req, res) {
+    Customer.findOne({ _id: ObjectId(req.body._id) })
+      .then((customer) => {
+        if (!customer)
+          return res.status(404).json({ message: 'Không tìm thấy!' });
+        customer.first_name = req.body.first_name;
+        customer.last_name = req.body.last_name;
+        customer.email = req.body.email;
+        customer.birth = req.body.birth;
+        customer.gender = req.body.gender;
+        customer.avatar = req.body.avatar;
+        customer.address = req.body.address;
+        customer.phone = req.body.phone;
+        customer.carts = req.body.carts;
+        customer.delivery_addresses = req.body.delivery_addresses;
+        customer.save((err) => {
+          if (err) return res.status(500).json({ message: err.message });
+          else res.status(200).json({ message: 'Cập nhật thành công!' });
+        });
+      })
+      .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));
+  }
+
+  // update
   async update(req, res) {
     Customer.findOne({ _id: ObjectId(req.body._id) })
       .then((customer) => {
@@ -131,10 +163,12 @@ class CustomerController {
         customer.last_name = req.body.last_name;
         customer.email = req.body.email;
         customer.birth = req.body.birth;
+        customer.gender = req.body.gender;
         customer.avatar = req.body.avatar;
         customer.address = req.body.address;
         customer.phone = req.body.phone;
         customer.carts = req.body.carts;
+        customer.delivery_addresses = req.body.delivery_addresses;
         customer.save((err) => {
           if (err) return res.status(500).json({ message: err.message });
           else res.status(200).json({ message: 'Cập nhật thành công!' });

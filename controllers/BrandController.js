@@ -55,12 +55,12 @@ class BrandController {
       .limit(1)
       .then((data) => {
         const newId = data.length > 0 ? data[0].id + 1 : 1;
-        brand = new Brand({
-          id: newId,
-          brand_name: req.body.brand_name,
-          path: req.body.path,
-          description: req.body.description,
-        });
+        brand = new Brand();
+        brand.id = newId;
+        brand.brand_name = req.body.brand_name;
+        brand.path = req.body.path;
+        brand.thumbnail = req.body.thumbnail;
+        brand.description = req.body.description;
         brand.save((err) => {
           if (err) {
             return res.status(400).json({ message: 'Có lỗi xảy ra!' });
@@ -79,6 +79,7 @@ class BrandController {
           return res.status(404).json({ message: 'Không tìm thấy!' });
         brand.brand_name = req.body.brand_name;
         brand.path = req.body.path;
+        brand.thumbnail = req.body.thumbnail;
         brand.description = req.body.description;
         brand.save((err) => {
           if (err) return res.status(500).json({ message: err.message });

@@ -1,5 +1,5 @@
 const Order = require('../models/Order');
-const { ObjectId } = require('mongodb');
+const { ObjectId, Long } = require('mongodb');
 
 class OrderController {
   // Get all
@@ -40,7 +40,7 @@ class OrderController {
 
   // Get by id
   getById(req, res) {
-    const myQuery = { id: req.params.id, active: true };
+    const myQuery = { id: Long(req.params.id), active: true };
     let aggregateQuery = [
       { $match: myQuery },
       {
@@ -56,7 +56,10 @@ class OrderController {
     Order.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
-      .then((orders) => res.json(orders[0]))
+      .then((orders) => {
+        orders[0].customer = orders[0].customer[0];
+        return res.status(200).json(orders[0]);
+      })
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
@@ -68,15 +71,14 @@ class OrderController {
       .limit(1)
       .then((data) => {
         const newId = data.length > 0 ? data[0].id + 1 : 1;
-        order = new Order({
-          id: newId,
-          customer: ObjectId(req.body.customer),
-          payment_type: req.body.payment_type,
-          delivery_address: req.body.delivery_address,
-          note: req.body.note,
-          total: req.body.total,
-          details: req.body.details,
-        });
+        order = new Order();
+        order.id = req.body.id ? req.body.id : newId;
+        order.customer = ObjectId(req.body.customer);
+        order.payment_type = req.body.payment_type;
+        order.delivery_address = req.body.delivery_address;
+        order.note = req.body.note;
+        order.total = req.body.total;
+        order.details = req.body.details;
         order.save((err) => {
           if (err) {
             return res.status(400).json({ message: 'Có lỗi xảy ra!' });
@@ -98,6 +100,10 @@ class OrderController {
         order.note = req.body.note;
         order.total = req.body.total;
         order.details = req.body.details;
+        order.delivery_status = req.body.delivery_status;
+        order.card_type = req.body.card_type;
+        order.card_name = req.body.card_name;
+        order.card_info = req.body.card_info;
         order.save((err) => {
           if (err) return res.status(500).json({ message: err.message });
           else res.status(200).json({ message: 'Cập nhật thành công!' });

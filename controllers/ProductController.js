@@ -1,4 +1,6 @@
 const Product = require('../models/Product');
+const Order = require('../models/Order');
+const Brand = require('../models/Brand');
 const { ObjectId } = require('mongodb');
 
 class ProductController {
@@ -42,6 +44,15 @@ class ProductController {
       },
       {
         $graphLookup: {
+          from: 'categories', // Match with to collection what want to search
+          startWith: '$category', // Name of array (origin)
+          connectFromField: 'category', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'category', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
           from: 'sub_categories', // Match with to collection what want to search
           startWith: '$category_sub', // Name of array (origin)
           connectFromField: 'category_sub', // Field of array
@@ -80,6 +91,7 @@ class ProductController {
       .then((products) => {
         products.forEach((item) => {
           item.category_sub = item.category_sub[0];
+          item.category = item.category[0];
           item.brand = item.brand[0];
           item.discount = item.discount ? item.discount[0] : undefined;
           item.collect = item.collect ? item.collect[0] : undefined;
@@ -90,10 +102,10 @@ class ProductController {
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
-  // Get featured products
+  // Get products for client
   searchClientProducts(req, res) {
     let page = req.body.page || 1;
-    let pageSize = req.body.pageSize || 10;
+    let pageSize = req.body.pageSize;
     const myQuery = {
       id: { $exists: true },
       product_name: {
@@ -108,8 +120,13 @@ class ProductController {
 
     if (req.body.brand) myQuery.brand = req.body.brand;
 
-    if (req.body.category) {
-      myQuery.category_sub = req.body.category;
+    if (req.body.category_sub) myQuery.category_sub = req.body.category_sub;
+    else {
+      if (req.body.category) myQuery.category = req.body.category;
+    }
+
+    if (req.body.collect) {
+      myQuery.collect = req.body.collect;
     }
 
     let aggregateQuery = [
@@ -139,6 +156,15 @@ class ProductController {
           connectFromField: 'category_sub', // Field of array
           connectToField: 'id', // from which field it will match
           as: 'category_sub', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
+          from: 'categories', // Match with to collection what want to search
+          startWith: '$category', // Name of array (origin)
+          connectFromField: 'category', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'category', // Add or replace field in origin collection
         },
       },
       {
@@ -178,6 +204,12 @@ class ProductController {
         sort._id = 1;
         break;
     }
+
+    if (page && pageSize)
+      aggregateQuery.push(
+        { $limit: pageSize },
+        { $skip: page * pageSize - pageSize }
+      );
 
     aggregateQuery.push({ $sort: sort });
 
@@ -230,6 +262,7 @@ class ProductController {
               item.min_price = Math.min(...arr).toLocaleString('en');
               item.max_price = Math.max(...arr);
               item.category_sub = item.category_sub[0];
+              item.category = item.category[0];
               item.brand = item.brand[0];
               item.discount = item.discount ? item.discount[0] : undefined;
               item.collect = item.collect ? item.collect[0] : undefined;
@@ -245,7 +278,7 @@ class ProductController {
         result.forEach(
           (item) => (item.max_price = item.max_price.toLocaleString('en'))
         );
-        if (result.length > pageSize) result.length = pageSize;
+        // if (result.length > pageSize) result.length = pageSize;
         return res.status(200).json(result);
       })
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
@@ -253,8 +286,68 @@ class ProductController {
 
   // Get featured products
   searchFeaturedProducts(req, res) {
-    // let page = req.body.page || 1;
-    // let pageSize = req.body.pageSize || 10;
+    let page = req.body.page || 1;
+    let pageSize = req.body.pageSize;
+    let sortName = req.body.sortName;
+    let sort = {};
+    const myQuery = {
+      id: { $exists: true },
+      active: true,
+    };
+
+    Order.find()
+      .then(async (orders) => {
+        let products = orders.reduce(
+          (prev, curr) => [...prev, ...curr.details],
+          []
+        );
+        products = products.filter(
+          (value, index, self) =>
+            index ===
+            self.findIndex(
+              (t) => t.product_id === value.product_id
+            )
+        );
+
+        products.length = pageSize || 5;
+
+        products = await products.reduce(async (prev, curr) => {
+          return [...prev, await Product.findOne({id: curr.product_id})];
+        }, []);
+
+        const result = [];
+        await products.forEach(async (item) => {
+          const clone = JSON.parse(JSON.stringify(item));
+          if (clone.variants.length > 0) {
+            const newVariants = clone.variants.filter(
+              (variant) => variant.status === true
+            );
+            if (newVariants.length > 0) {
+              clone.variants = newVariants;
+              const arr = clone.variants.map((variant) =>
+                Number(variant.sell_price.replace(/,/g, ''))
+              );
+              clone.min_price = Math.min(...arr)?.toLocaleString('en');
+              clone.max_price = Math.max(...arr)?.toLocaleString('en');
+              // clone.category_sub = clone.category_sub[0];
+              // clone.category = clone.category[0];
+              // clone.brand = await Brand.findOne({id: clone.brand});
+              // clone.discount = clone.discount ? clone.discount[0] : undefined;
+              // clone.collect = clone.collect ? clone.collect[0] : undefined;
+              // clone.supplier = clone.supplier ? clone.supplier[0] : undefined;
+              result.push(clone);
+            }
+          }
+        });
+        return res.status(200).json(result);
+      })
+      .catch((err) => res.status(401).json({ message: 'Có lỗi xảy ra!' }));
+  }
+
+  // Get selling products
+  searchSellingProducts(req, res) {
+    let page = req.body.page;
+    let pageSize = req.body.pageSize;
     let sortName = req.body.sortName;
     let sort = {};
     const myQuery = {
@@ -300,6 +393,15 @@ class ProductController {
       },
       {
         $graphLookup: {
+          from: 'categories', // Match with to collection what want to search
+          startWith: '$category', // Name of array (origin)
+          connectFromField: 'category', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'category', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
           from: 'brands', // Match with to collection what want to search
           startWith: '$brand', // Name of array (origin)
           connectFromField: 'brand', // Field of array
@@ -318,10 +420,13 @@ class ProductController {
       },
     ];
 
-    if (sortName) {
-      if (sortName) sort.product_name = sortName;
-      aggregateQuery.push({ $sort: sort });
-    }
+    aggregateQuery.push({ $sort: { createdAt: -1 } });
+
+    if (page && pageSize)
+      aggregateQuery.push(
+        { $limit: pageSize },
+        { $skip: page * pageSize - pageSize }
+      );
 
     Product.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
@@ -341,6 +446,7 @@ class ProductController {
               item.min_price = Math.min(...arr)?.toLocaleString('en');
               item.max_price = Math.max(...arr)?.toLocaleString('en');
               item.category_sub = item.category_sub[0];
+              item.category = item.category[0];
               item.brand = item.brand[0];
               item.discount = item.discount ? item.discount[0] : undefined;
               item.collect = item.collect ? item.collect[0] : undefined;
@@ -350,16 +456,15 @@ class ProductController {
             }
           }
         });
-        if (result.length > 5) result.length = 5;
         return res.status(200).json(result);
       })
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
-  // Get selling products
-  searchSellingProducts(req, res) {
-    // let page = req.body.page || 1;
-    // let pageSize = req.body.pageSize || 10;
+  // Get new products
+  searchNewProducts(req, res) {
+    let page = req.body.page;
+    let pageSize = req.body.pageSize;
     let sortName = req.body.sortName;
     let sort = {};
     const myQuery = {
@@ -405,6 +510,15 @@ class ProductController {
       },
       {
         $graphLookup: {
+          from: 'categories', // Match with to collection what want to search
+          startWith: '$category', // Name of array (origin)
+          connectFromField: 'category', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'category', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
           from: 'brands', // Match with to collection what want to search
           startWith: '$brand', // Name of array (origin)
           connectFromField: 'brand', // Field of array
@@ -423,10 +537,13 @@ class ProductController {
       },
     ];
 
-    if (sortName) {
-      if (sortName) sort.product_name = sortName;
-      aggregateQuery.push({ $sort: sort });
-    }
+    aggregateQuery.push({ $sort: { createdAt: -1 } });
+
+    if (page && pageSize)
+      aggregateQuery.push(
+        { $limit: pageSize },
+        { $skip: page * pageSize - pageSize }
+      );
 
     Product.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
@@ -446,6 +563,7 @@ class ProductController {
               item.min_price = Math.min(...arr)?.toLocaleString('en');
               item.max_price = Math.max(...arr)?.toLocaleString('en');
               item.category_sub = item.category_sub[0];
+              item.category = item.category[0];
               item.brand = item.brand[0];
               item.discount = item.discount ? item.discount[0] : undefined;
               item.collect = item.collect ? item.collect[0] : undefined;
@@ -455,15 +573,14 @@ class ProductController {
             }
           }
         });
-        if (result.length > 9) result.length = 9;
         return res.status(200).json(result);
       })
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
   searchBySubCategory(req, res) {
-    // let page = req.body.page || 1;
-    // let pageSize = req.body.pageSize || 10;
+    let page = req.body.page;
+    let pageSize = req.body.pageSize;
     let sortName = req.body.sortName;
     let sort = {};
     const myQuery = {
@@ -507,6 +624,15 @@ class ProductController {
       },
       {
         $graphLookup: {
+          from: 'categories', // Match with to collection what want to search
+          startWith: '$category', // Name of array (origin)
+          connectFromField: 'category', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'category', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
           from: 'brands', // Match with to collection what want to search
           startWith: '$brand', // Name of array (origin)
           connectFromField: 'brand', // Field of array
@@ -530,12 +656,19 @@ class ProductController {
       aggregateQuery.push({ $sort: sort });
     }
 
+    if (page && pageSize)
+      aggregateQuery.push(
+        { $limit: pageSize },
+        { $skip: page * pageSize - pageSize }
+      );
+
     Product.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
       .then((products) => {
         products.forEach((item) => {
           item.category_sub = item.category_sub[0];
+          item.category = item.category[0];
           item.brand = item.brand[0];
           item.discount = item.discount ? item.discount[0] : undefined;
           item.collect = item.collect ? item.collect[0] : undefined;
@@ -580,6 +713,15 @@ class ProductController {
       },
       {
         $graphLookup: {
+          from: 'categories', // Match with to collection what want to search
+          startWith: '$category', // Name of array (origin)
+          connectFromField: 'category', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'category', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
           from: 'brands', // Match with to collection what want to search
           startWith: '$brand', // Name of array (origin)
           connectFromField: 'brand', // Field of array
@@ -602,6 +744,7 @@ class ProductController {
       // .limit(pageSize)
       .then((products) => {
         products[0].category_sub = products[0].category_sub[0];
+        products[0].category = products[0].category[0];
         products[0].brand = products[0].brand[0];
         products[0].discount = products[0].discount
           ? products[0].discount[0]
@@ -651,6 +794,15 @@ class ProductController {
       },
       {
         $graphLookup: {
+          from: 'categories', // Match with to collection what want to search
+          startWith: '$category', // Name of array (origin)
+          connectFromField: 'category', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'category', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
           from: 'brands', // Match with to collection what want to search
           startWith: '$brand', // Name of array (origin)
           connectFromField: 'brand', // Field of array
@@ -684,6 +836,7 @@ class ProductController {
             products[0].min_price = Math.min(...arr)?.toLocaleString('en');
             products[0].max_price = Math.max(...arr)?.toLocaleString('en');
             products[0].category_sub = products[0].category_sub[0];
+            products[0].category = products[0].category[0];
             products[0].brand = products[0].brand[0];
             products[0].discount = products[0].discount
               ? products[0].discount[0]
@@ -737,6 +890,15 @@ class ProductController {
       },
       {
         $graphLookup: {
+          from: 'categories', // Match with to collection what want to search
+          startWith: '$category', // Name of array (origin)
+          connectFromField: 'category', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'category', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
           from: 'brands', // Match with to collection what want to search
           startWith: '$brand', // Name of array (origin)
           connectFromField: 'brand', // Field of array
@@ -759,6 +921,7 @@ class ProductController {
       // .limit(pageSize)
       .then((products) => {
         products[0].category_sub = products[0].category_sub[0];
+        products[0].category = products[0].category[0];
         products[0].brand = products[0].brand[0];
         products[0].discount = products[0].discount
           ? products[0].discount[0]
@@ -789,6 +952,7 @@ class ProductController {
         product.thumbnail = req.body.thumbnail;
         product.discount = req.body.discount;
         product.collect = req.body.collect;
+        product.category = req.body.category;
         product.category_sub = req.body.category_sub;
         product.brand = req.body.brand;
         // product.supplier = req.body.supplier;
@@ -818,6 +982,7 @@ class ProductController {
         product.thumbnail = req.body.thumbnail;
         product.discount = req.body.discount;
         product.collect = req.body.collect;
+        product.category = req.body.category;
         product.category_sub = req.body.category_sub;
         product.brand = req.body.brand;
         product.supplier = req.body.supplier;
@@ -850,6 +1015,67 @@ class ProductController {
       })
       .catch((err) => res.status(404).json({ message: 'Có lỗi xảy ra!' }));
   }
+}
+
+const getAggregate = (myQuery='') => {
+  let aggregateQuery = [
+    { $match: myQuery },
+    {
+      $graphLookup: {
+        from: 'discounts', // Match with to collection what want to search
+        startWith: '$discount', // Name of array (origin)
+        connectFromField: 'discount', // Field of array
+        connectToField: 'id', // from which field it will match
+        as: 'discount', // Add or replace field in origin collection
+      },
+    },
+    {
+      $graphLookup: {
+        from: 'collects', // Match with to collection what want to search
+        startWith: '$collect', // Name of array (origin)
+        connectFromField: 'collect', // Field of array
+        connectToField: 'id', // from which field it will match
+        as: 'collect', // Add or replace field in origin collection
+      },
+    },
+    {
+      $graphLookup: {
+        from: 'sub_categories', // Match with to collection what want to search
+        startWith: '$category_sub', // Name of array (origin)
+        connectFromField: 'category_sub', // Field of array
+        connectToField: 'id', // from which field it will match
+        as: 'category_sub', // Add or replace field in origin collection
+      },
+    },
+    {
+      $graphLookup: {
+        from: 'categories', // Match with to collection what want to search
+        startWith: '$category', // Name of array (origin)
+        connectFromField: 'category', // Field of array
+        connectToField: 'id', // from which field it will match
+        as: 'category', // Add or replace field in origin collection
+      },
+    },
+    {
+      $graphLookup: {
+        from: 'brands', // Match with to collection what want to search
+        startWith: '$brand', // Name of array (origin)
+        connectFromField: 'brand', // Field of array
+        connectToField: 'id', // from which field it will match
+        as: 'brand', // Add or replace field in origin collection
+      },
+    },
+    {
+      $graphLookup: {
+        from: 'suppliers', // Match with to collection what want to search
+        startWith: '$supplier', // Name of array (origin)
+        connectFromField: 'supplier', // Field of array
+        connectToField: 'id', // from which field it will match
+        as: 'supplier', // Add or replace field in origin collection
+      },
+    },
+  ];
+  return aggregateQuery;
 }
 
 module.exports = new ProductController();

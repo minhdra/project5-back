@@ -1,57 +1,61 @@
 const mongoose = require('mongoose');
 
-const productSchema = new mongoose.Schema({
+const productSchema = new mongoose.Schema(
+  {
     id: {
-        type: Number,
-        required: true,
+      type: Number,
+      required: true,
     },
     product_name: {
-        type: String,
-        required: true,
-        max: 255
+      type: String,
+      required: true,
+      max: 255,
     },
     path: {
-        type: String,
-        required: true,
-        max: 255
+      type: String,
+      required: true,
+      max: 255,
     },
     thumbnail: {
-        type: String,
-        required: true,
+      type: String,
+      required: true,
     },
     discount: {
-        type: Number,
+      type: Number,
+    },
+    category: {
+      type: Number,
+      required: true,
     },
     category_sub: {
-        type: Number,
-        require: true,
+      type: Number,
     },
     brand: {
-        type: Number,
-        require: true,
+      type: Number,
+      require: true,
     },
     collect: {
-        type: Number,
+      type: Number,
     },
     supplier: {
-        type: Number,
+      type: Number,
     },
     origin: {
-        type: String,
-        require: true,
+      type: String,
+      require: true,
     },
     material: {
-        type: String,
+      type: String,
     },
     style: {
-        type: String,
+      type: String,
     },
     description: {
-        type: String,
+      type: String,
     },
     variants: {
-        type: Array,
-        required: true,
+      type: Array,
+      required: true,
     },
     // createdId: {
     //     type: mongoose.Schema.Types.ObjectId,
@@ -62,12 +66,14 @@ const productSchema = new mongoose.Schema({
     //     required: true,
     // },
     active: {
-        type: Boolean,
-        required: true,
-        default: true,
-    }
-}, {
+      type: Boolean,
+      required: true,
+      default: true,
+    },
+  },
+  {
     timestamps: true,
-});
+  }
+);
 
 module.exports = mongoose.model('products', productSchema);

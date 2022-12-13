@@ -63,13 +63,21 @@ class UserController {
   // Login
   async login(req, res) {
     const options = {
-      username: req.body.username,
+      $or: [{ username: req.body.username }, { email: req.body.username }],
+      // username: req.body.username,
       active: true,
     };
-    req.body.role >= 2 ? (options.verified = true) : '';
-    const user = await User.findOne(options);
+
+    // return res.status(200).send('logging')
+
+    const user = await User.findOne(options).catch((err) =>
+      res.status(400).json({ message: 'Có lỗi xảy ra!' })
+    );
+
     if (!user)
-      return res.status(422).json('Tài khoản hoặc mật khẩu không chính xác!');
+      return res
+        .status(422)
+        .json({ message: 'Tài khoản hoặc mật khẩu không chính xác!' });
 
     const checkPassword = await bcrypt.compare(
       req.body.password,
@@ -77,21 +85,28 @@ class UserController {
     );
 
     if (!checkPassword)
-      return res.status(422).json('Tài khoản hoặc mật khẩu không chính xác!');
+      return res
+        .status(422)
+        .json({ message: 'Tài khoản hoặc mật khẩu không chính xác!' });
 
     if (
       (req.body.type === 'admin' && user.role === 2) ||
       (req.body.type === 'client' && user.role !== 2) ||
-      !req.body.type
+      !req.body.type ||
+      (req.body.type !== 'admin' && req.body.type !== 'client')
     )
-      return res.status(422).json('Có phải bạn bị lạc?');
+      return res.status(422).json({ message: 'Có phải bạn bị lạc?' });
 
-    const token = jwt.sign({ _id: user._id }, process.env.TOKEN_SECRET, {
-      expiresIn: 60 * 60 * 24,
+    const tokenSecret =
+      req.body.type === 'admin'
+        ? process.env.ADMIN_TOKEN_SECRET
+        : process.env.CLIENT_TOKEN_SECRET;
+    const token = jwt.sign({ _id: user._id }, tokenSecret, {
+      expiresIn: req.body.type === 'admin' ? 60 * 60 * 24 : 60 * 60 * 24 * 365,
     });
     res.header('auth-token', token);
     const message = `${user.username} đang đăng nhập...`;
-    return res.json({ data: user, token, message });
+    return res.status(200).json({ data: user, token, message });
   }
 
   // Register
@@ -119,7 +134,8 @@ class UserController {
           active: true,
         });
 
-        if (checkEmailExist && checkEmailExist?.role >= 2)
+        // if (checkEmailExist && checkEmailExist?.role >= 2)
+        if (checkEmailExist)
           return res.status(422).json({ message: 'Email đã tồn tại!' });
 
         const salt = await bcrypt.genSalt(10);
@@ -172,7 +188,7 @@ class UserController {
 
   // Change password
   async changePassword(req, res) {
-    const myQuery = { _id: ObjectId(req.params._id), active: true };
+    const myQuery = { _id: ObjectId(req.body._id), active: true };
     const user = await User.findOne(myQuery);
     if (!user) return res.status(422).json('Không tìm thấy!');
 
@@ -180,8 +196,32 @@ class UserController {
 
     if (error) return res.status(422).json(error.details[0].message);
 
+    // Start check old password
+    const checkPassword = await bcrypt.compare(
+      req.body.oldPassword,
+      user.password
+    );
+
+    if (!checkPassword)
+      return res
+        .status(422)
+        .json({ message: 'Mật khẩu không chính xác!' });
+    // End check old password
+
+    // Start check old password and check new password
+    const checkPassword2 = await bcrypt.compare(
+      req.body.oldPassword,
+      req.body.newPassword
+    );
+
+    if (checkPassword2)
+      return res
+        .status(422)
+        .json({ message: 'Mật khẩu mới của bạn giống với mật khẩu cũ!' });
+    // End check old password and check new password
+
     const salt = await bcrypt.genSalt(10);
-    const hashPassword = await bcrypt.hash(req.body.password, salt);
+    const hashPassword = await bcrypt.hash(req.body.newPassword, salt);
 
     user.password = hashPassword;
     user.save((err) => {
@@ -273,7 +313,8 @@ function createUser(role, user) {
           first_name: '',
           last_name: '',
           phone: '',
-          avatar: '',
+          avatar:
+            'https://res.cloudinary.com/de2haobkl/image/upload/v1669357208/avatar_zhsccj.jpg',
           address: {},
           delivery_addresses: [],
         });

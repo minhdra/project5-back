@@ -14,6 +14,8 @@ const collectRouter = require('./collect');
 const imageRouter = require('./image');
 const slideRouter = require('./slide');
 const mailRouter = require('./email');
+const vnpayPaymentRouter = require('./vn_pay');
+const reviewRouter = require('./review');
 
 function directionRoute(app) {
   app.use('/api/product', productRouter);
@@ -22,7 +24,7 @@ function directionRoute(app) {
   app.use('/api/customer', customerRouter);
   app.use('/api/discount', discountRouter);
   app.use('/api/order', orderRouter);
-  app.use('/api/payment', paymentRouter);
+  app.use('/api/payment', vnpayPaymentRouter);
   app.use('/api/staff', staffRouter);
   app.use('/api/sub-category', sub_categoryRouter);
   app.use('/api/collection', collectRouter);
@@ -32,6 +34,8 @@ function directionRoute(app) {
   app.use('/api/slide', slideRouter);
   app.use('/api/image', imageRouter);
   app.use('/api/email', mailRouter);
+  app.use('/api/payment-model', paymentRouter);
+  app.use('/api/review', reviewRouter);
 }
 
 module.exports = directionRoute;
