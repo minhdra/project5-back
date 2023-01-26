@@ -11,6 +11,7 @@ const discountSchema = new mongoose.Schema(
     },
     discount_percent: {
       type: Number,
+      required: true,
     },
     start_date: {
       type: Date,
@@ -18,7 +19,6 @@ const discountSchema = new mongoose.Schema(
     },
     end_date: {
       type: Date,
-      required: true,
     },
     active: {
       type: Boolean,

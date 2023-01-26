@@ -108,9 +108,9 @@ class StaffController {
         staff.avatar = req.body.avatar;
         staff.address = req.body.address;
         staff.phone = req.body.phone;
-        staff.save((err) => {
+        staff.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
-          else res.status(200).json({ message: 'Cập nhật thành công!' });
+          else res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
         });
       })
       .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));

@@ -147,13 +147,13 @@ class CategorySubController {
           category: req.body.category,
           description: req.body.description,
         });
-        categorySub.save((err) => {
+        categorySub.save((err, item) => {
           if (err) {
             return res.status(400).json({message: 'Có lỗi xảy ra!'});
           } else {
             return res
               .status(200)
-              .json({ message: 'Cập nhật thành công!' });
+              .json({ data: item, message: 'Cập nhật thành công!' });
           }
         });
       });
@@ -169,9 +169,9 @@ class CategorySubController {
         categorySub.path = req.body.path;
         categorySub.category = req.body.category;
         categorySub.description = req.body.description;
-        categorySub.save((err) => {
+        categorySub.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
-          else res.status(200).json({ message: 'Cập nhật thành công!' });
+          else res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
         });
       })
       .catch((err) => res.status(422).json({message: 'Có lỗi xảy ra!'}));
@@ -184,12 +184,12 @@ class CategorySubController {
       .then((categorySub) => {
         if (categorySub) {
           categorySub.active = false;
-          categorySub.save((err) => {
+          categorySub.save((err, item) => {
             if (err) return res.status(400).json({message: 'Có lỗi xảy ra!'});
             else
               return res
                 .status(200)
-                .json({ message: 'Cập nhật thành công!' });
+                .json({ data: item, message: 'Cập nhật thành công!' });
           });
         } else return res.status(404).json({ message: 'Không tìm thấy!' });
       })

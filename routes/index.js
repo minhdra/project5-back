@@ -16,6 +16,7 @@ const slideRouter = require('./slide');
 const mailRouter = require('./email');
 const vnpayPaymentRouter = require('./vn_pay');
 const reviewRouter = require('./review');
+const statisticRouter = require('./statistic');
 
 function directionRoute(app) {
   app.use('/api/product', productRouter);
@@ -36,6 +37,7 @@ function directionRoute(app) {
   app.use('/api/email', mailRouter);
   app.use('/api/payment-model', paymentRouter);
   app.use('/api/review', reviewRouter);
+  app.use('/api/statistic', statisticRouter);
 }
 
 module.exports = directionRoute;

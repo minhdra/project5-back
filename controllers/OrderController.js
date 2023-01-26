@@ -26,15 +26,20 @@ class OrderController {
       },
     ];
 
-    if (sortName) {
-      if (sortName) sort.id = sortName;
-      aggregateQuery.push({ $sort: sort });
-    }
+    // if (sortName) {
+    //   if (sortName) sort.id = sortName;
+    //   aggregateQuery.push({ $sort: sort });
+    // }
+    aggregateQuery.push({ $sort: {delivery_status: -1, paid: 1} });
 
     Order.aggregate(aggregateQuery)
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
-      .then((orders) => res.json(orders))
+      .then((orders) => {
+        orders.forEach((item) => item.customer = item.customer[0])
+        
+        return res.json(orders);
+      })
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
@@ -57,8 +62,12 @@ class OrderController {
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
       .then((orders) => {
-        orders[0].customer = orders[0].customer[0];
-        return res.status(200).json(orders[0]);
+        if (orders.length > 0)
+        {
+          orders[0].customer = orders[0].customer[0];
+          return res.status(200).json(orders[0]);
+        }
+        else return res.status(200).json(false);
       })
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
@@ -79,11 +88,11 @@ class OrderController {
         order.note = req.body.note;
         order.total = req.body.total;
         order.details = req.body.details;
-        order.save((err) => {
+        order.save((err, item) => {
           if (err) {
             return res.status(400).json({ message: 'Có lỗi xảy ra!' });
           } else {
-            return res.status(200).json({ message: 'Cập nhật thành công!' });
+            return res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
           }
         });
       });
@@ -104,9 +113,9 @@ class OrderController {
         order.card_type = req.body.card_type;
         order.card_name = req.body.card_name;
         order.card_info = req.body.card_info;
-        order.save((err) => {
+        order.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
-          else res.status(200).json({ message: 'Cập nhật thành công!' });
+          else res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
         });
       })
       .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));
@@ -119,10 +128,10 @@ class OrderController {
       .then((order) => {
         if (order) {
           order.active = false;
-          order.save((err) => {
+          order.save((err, item) => {
             if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
             else
-              return res.status(200).json({ message: 'Cập nhật thành công!' });
+              return res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
           });
         } else return res.status(404).json({ message: 'Không tìm thấy!' });
       })

@@ -49,11 +49,11 @@ class DiscountController {
           start_date: req.body.start_date,
           end_date: req.body.end_date,
         });
-        discount.save((err) => {
+        discount.save((err, item) => {
           if (err) {
             return res.status(400).json({ message: 'Có lỗi xảy ra!' });
           } else {
-            return res.status(200).json({ message: 'Cập nhật thành công!' });
+            return res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
           }
         });
       });
@@ -69,9 +69,9 @@ class DiscountController {
         discount.discount_percent = req.body.discount_percent;
         discount.start_date = req.body.email;
         discount.end_date = req.body.end_date;
-        discount.save((err) => {
+        discount.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
-          else res.status(200).json({ message: 'Cập nhật thành công!' });
+          else res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
         });
       })
       .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));
@@ -84,7 +84,7 @@ class DiscountController {
       .then((discount) => {
         if (discount) {
           discount.active = false;
-          discount.save((err) => {
+          discount.save((err, item) => {
             if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
             else
               return res

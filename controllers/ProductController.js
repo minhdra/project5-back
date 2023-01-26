@@ -31,6 +31,7 @@ class ProductController {
           connectFromField: 'discount', // Field of array
           connectToField: 'id', // from which field it will match
           as: 'discount', // Add or replace field in origin collection
+          restrictSearchWithMatch: {active: true},
         },
       },
       {
@@ -138,6 +139,7 @@ class ProductController {
           connectFromField: 'discount', // Field of array
           connectToField: 'id', // from which field it will match
           as: 'discount', // Add or replace field in origin collection
+          restrictSearchWithMatch: {active: true},
         },
       },
       {
@@ -147,6 +149,7 @@ class ProductController {
           connectFromField: 'collect', // Field of array
           connectToField: 'id', // from which field it will match
           as: 'collect', // Add or replace field in origin collection
+          restrictSearchWithMatch: {active: true},
         },
       },
       {
@@ -156,6 +159,7 @@ class ProductController {
           connectFromField: 'category_sub', // Field of array
           connectToField: 'id', // from which field it will match
           as: 'category_sub', // Add or replace field in origin collection
+          restrictSearchWithMatch: {active: true},
         },
       },
       {
@@ -165,6 +169,7 @@ class ProductController {
           connectFromField: 'category', // Field of array
           connectToField: 'id', // from which field it will match
           as: 'category', // Add or replace field in origin collection
+          restrictSearchWithMatch: {active: true},
         },
       },
       {
@@ -174,6 +179,7 @@ class ProductController {
           connectFromField: 'brand', // Field of array
           connectToField: 'id', // from which field it will match
           as: 'brand', // Add or replace field in origin collection
+          restrictSearchWithMatch: {active: true},
         },
       },
       {
@@ -183,6 +189,7 @@ class ProductController {
           connectFromField: 'supplier', // Field of array
           connectToField: 'id', // from which field it will match
           as: 'supplier', // Add or replace field in origin collection
+          restrictSearchWithMatch: {active: true},
         },
       },
     ];
@@ -295,7 +302,7 @@ class ProductController {
       active: true,
     };
 
-    Order.find()
+    Order.find({ delivery_status: 0, active: true })
       .then(async (orders) => {
         let products = orders.reduce(
           (prev, curr) => [...prev, ...curr.details],
@@ -303,20 +310,21 @@ class ProductController {
         );
         products = products.filter(
           (value, index, self) =>
-            index ===
-            self.findIndex(
-              (t) => t.product_id === value.product_id
-            )
+            index === self.findIndex((t) => t.product_id === value.product_id)
         );
 
-        products.length = pageSize || 5;
+        if (products.length > pageSize) products.length = pageSize || 5;
 
-        products = await products.reduce(async (prev, curr) => {
-          return [...prev, await Product.findOne({id: curr.product_id})];
+        // const ps = await Product.find({ active: true });
+        const ps = await Product.aggregate(getAggregate({ active: true }));
+        products = products.reduce((prev, curr) => {
+          const product = ps.filter((p) => p.id === curr.product_id);
+          if (product) return [...prev, ...product];
+          else return [...prev];
         }, []);
 
         const result = [];
-        await products.forEach(async (item) => {
+        products.forEach(async (item) => {
           const clone = JSON.parse(JSON.stringify(item));
           if (clone.variants.length > 0) {
             const newVariants = clone.variants.filter(
@@ -329,12 +337,12 @@ class ProductController {
               );
               clone.min_price = Math.min(...arr)?.toLocaleString('en');
               clone.max_price = Math.max(...arr)?.toLocaleString('en');
-              // clone.category_sub = clone.category_sub[0];
-              // clone.category = clone.category[0];
-              // clone.brand = await Brand.findOne({id: clone.brand});
-              // clone.discount = clone.discount ? clone.discount[0] : undefined;
-              // clone.collect = clone.collect ? clone.collect[0] : undefined;
-              // clone.supplier = clone.supplier ? clone.supplier[0] : undefined;
+              clone.category_sub = clone.category_sub[0];
+              clone.category = clone.category[0];
+              clone.brand = clone.brand[0];
+              clone.discount = clone.discount ? clone.discount[0] : undefined;
+              clone.collect = clone.collect ? clone.collect[0] : undefined;
+              clone.supplier = clone.supplier ? clone.supplier[0] : undefined;
               result.push(clone);
             }
           }
@@ -760,6 +768,102 @@ class ProductController {
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
 
+  // Get by id
+  getProductById(req, res) {
+    const myQuery = { id: Number(req.params.id), active: true };
+    let aggregateQuery = [
+      { $match: myQuery },
+      {
+        $graphLookup: {
+          from: 'discounts', // Match with to collection what want to search
+          startWith: '$discount', // Name of array (origin)
+          connectFromField: 'discount', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'discount', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
+          from: 'collects', // Match with to collection what want to search
+          startWith: '$collect', // Name of array (origin)
+          connectFromField: 'collect', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'collect', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
+          from: 'sub_categories', // Match with to collection what want to search
+          startWith: '$category_sub', // Name of array (origin)
+          connectFromField: 'category_sub', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'category_sub', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
+          from: 'categories', // Match with to collection what want to search
+          startWith: '$category', // Name of array (origin)
+          connectFromField: 'category', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'category', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
+          from: 'brands', // Match with to collection what want to search
+          startWith: '$brand', // Name of array (origin)
+          connectFromField: 'brand', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'brand', // Add or replace field in origin collection
+        },
+      },
+      {
+        $graphLookup: {
+          from: 'suppliers', // Match with to collection what want to search
+          startWith: '$supplier', // Name of array (origin)
+          connectFromField: 'supplier', // Field of array
+          connectToField: 'id', // from which field it will match
+          as: 'supplier', // Add or replace field in origin collection
+        },
+      },
+    ];
+    Product.aggregate(aggregateQuery)
+      // .skip(page * pageSize - pageSize)
+      // .limit(pageSize)
+      .then((products) => {
+        if (products[0].variants.length > 0) {
+          const newVariants = products[0].variants.filter(
+            (variant) => variant.status === true
+          );
+          if (newVariants.length > 0) {
+            products[0].variants = newVariants;
+            const arr = products[0].variants.map((variant) =>
+              Number(variant.sell_price.replace(/,/g, ''))
+            );
+            products[0].min_price = Math.min(...arr)?.toLocaleString('en');
+            products[0].max_price = Math.max(...arr)?.toLocaleString('en');
+            products[0].category_sub = products[0].category_sub[0];
+            products[0].category = products[0].category[0];
+            products[0].brand = products[0].brand[0];
+            products[0].discount = products[0].discount
+              ? products[0].discount[0]
+              : undefined;
+            products[0].collect = products[0].collect
+              ? products[0].collect[0]
+              : undefined;
+            products[0].supplier = products[0].supplier
+              ? products[0].supplier[0]
+              : undefined;
+
+            return res.status(200).json(products[0]);
+          }
+        }
+        return res.status(404).json({ message: 'Không tìm thấy!' });
+      })
+      .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
+  }
+
   // Get by path for client
   getByPathClient(req, res) {
     const myQuery = { path: req.params.path, active: true };
@@ -961,11 +1065,13 @@ class ProductController {
         product.style = req.body.style;
         product.description = req.body.description;
         // product.variants = req.body.variants;
-        product.save((err) => {
+        product.save((err, item) => {
           if (err) {
             return res.status(400).json({ message: 'Có lỗi xảy ra!' });
           } else {
-            return res.status(200).json({ message: 'Cập nhật thành công!' });
+            return res
+              .status(200)
+              .json({ data: item, message: 'Cập nhật thành công!' });
           }
         });
       });
@@ -991,9 +1097,12 @@ class ProductController {
         product.style = req.body.style;
         product.description = req.body.description;
         product.variants = req.body.variants;
-        product.save((err) => {
+        product.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
-          else res.status(200).json({ message: 'Cập nhật thành công!' });
+          else
+            res
+              .status(200)
+              .json({ data: item, message: 'Cập nhật thành công!' });
         });
       })
       .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));
@@ -1006,10 +1115,12 @@ class ProductController {
       .then((product) => {
         if (product) {
           product.active = false;
-          product.save((err) => {
+          product.save((err, item) => {
             if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
             else
-              return res.status(200).json({ message: 'Cập nhật thành công!' });
+              return res
+                .status(200)
+                .json({ data: item, message: 'Cập nhật thành công!' });
           });
         } else return res.status(404).json({ message: 'Không tìm thấy!' });
       })
@@ -1017,7 +1128,7 @@ class ProductController {
   }
 }
 
-const getAggregate = (myQuery='') => {
+const getAggregate = (myQuery = '') => {
   let aggregateQuery = [
     { $match: myQuery },
     {
@@ -1076,6 +1187,6 @@ const getAggregate = (myQuery='') => {
     },
   ];
   return aggregateQuery;
-}
+};
 
 module.exports = new ProductController();

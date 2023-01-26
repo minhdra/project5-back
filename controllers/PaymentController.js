@@ -101,11 +101,11 @@ class PaymentController {
           account_no: req.body.account_no,
           expiry: req.body.expiry,
         });
-        payment.save((err) => {
+        payment.save((err, item) => {
           if (err) {
             return res.status(400).json({ message: 'Có lỗi xảy ra!' });
           } else {
-            return res.status(200).json({ message: 'Cập nhật thành công!' });
+            return res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
           }
         });
       });
@@ -120,9 +120,9 @@ class PaymentController {
         payment.provider = req.body.provider;
         payment.account_no = req.body.account_no;
         payment.expiry = req.body.expiry;
-        payment.save((err) => {
+        payment.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
-          else res.status(200).json({ message: 'Cập nhật thành công!' });
+          else res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
         });
       })
       .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));
@@ -135,10 +135,10 @@ class PaymentController {
       .then((payment) => {
         if (payment) {
           payment.active = false;
-          payment.save((err) => {
+          payment.save((err, item) => {
             if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
             else
-              return res.status(200).json({ message: 'Cập nhật thành công!' });
+              return res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
           });
         } else return res.status(404).json({ message: 'Không tìm thấy!' });
       })

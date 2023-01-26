@@ -178,7 +178,7 @@ class UserController {
             .json({ message: 'Tài khoản của bạn đã được xác thực rồi.' });
 
         user.verified = true;
-        user.save((err) => {
+        user.save((err, item) => {
           if (err) return res.status(404).json({ message: 'Có lỗi xảy ra!' });
           return res.status(200).json({ message: 'Xác thực thành công!' });
         });
@@ -224,7 +224,7 @@ class UserController {
     const hashPassword = await bcrypt.hash(req.body.newPassword, salt);
 
     user.password = hashPassword;
-    user.save((err) => {
+    user.save((err, item) => {
       if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
       else
         return res
@@ -246,7 +246,7 @@ class UserController {
               await deleteUser(user);
               return await res
                 .status(200)
-                .json({ message: 'Cập nhật thành công!' });
+                .json({ data: item, message: 'Cập nhật thành công!' });
             }
           });
         } else return res.status(404).json({ message: 'Không tìm thấy!' });
@@ -267,11 +267,11 @@ class UserController {
   //         id: newId,
   //         customer: ObjectId(customer._id),
   //       });
-  //       cart.save((err) => {
+  //       cart.save((err, item) => {
   //         if (err) {
   //           return res.status(400).json({ message: 'Có lỗi xảy ra!' });
   //         } else {
-  //           return res.status(200).json({ message: 'Cập nhật thành công!' });
+  //           return res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
   //         }
   //       });
   //     });
@@ -285,10 +285,10 @@ class UserController {
   //     .then((cart) => {
   //       if (cart) {
   //         cart.active = false;
-  //         cart.save((err) => {
+  //         cart.save((err, item) => {
   //           if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
   //           else {
-  //             return res.status(200).json({ message: 'Cập nhật thành công!' });
+  //             return res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
   //           }
   //         });
   //       } else return res.status(404).json({ message: 'Không tìm thấy!' });

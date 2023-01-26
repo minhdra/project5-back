@@ -4,8 +4,8 @@ const { ObjectId } = require('mongodb');
 class CollectController {
   // Get all
   search(req, res) {
-    // let page = req.body.page || 1;
-    // let pageSize = req.body.pageSize || 10;
+    let page = req.body.page || 1;
+    let pageSize = req.body.pageSize || 1000;
     let sort = req.body.sortName;
     const limit = req.body.limit;
     const myQuery = {
@@ -17,8 +17,8 @@ class CollectController {
     Collect.find(myQuery)
       .sort({ status: -1, order: 1 })
       .limit(limit ?? limit)
-      // .skip(page * pageSize - pageSize)
-      // .limit(pageSize)
+      .skip(page * pageSize - pageSize)
+      .limit(pageSize)
       .then((collects) => res.json(collects))
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
   }
@@ -66,11 +66,11 @@ class CollectController {
         collect.order = req.body.order;
         collect.status = req.body.status;
         collect.hashtag = req.body.hashtag;
-        collect.save((err) => {
+        collect.save((err, item) => {
           if (err) {
             return res.status(400).json({ message: 'Có lỗi xảy ra!' });
           } else {
-            return res.status(200).json({ message: 'Cập nhật thành công!' });
+            return res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
           }
         });
       });
@@ -89,9 +89,9 @@ class CollectController {
         collect.order = req.body.order;
         collect.status = req.body.status;
         collect.hashtag = req.body.hashtag;
-        collect.save((err) => {
+        collect.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
-          else res.status(200).json({ message: 'Cập nhật thành công!' });
+          else res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
         });
       })
       .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));
@@ -104,7 +104,7 @@ class CollectController {
       .then((collect) => {
         if (collect) {
           collect.active = false;
-          collect.save((err) => {
+          collect.save((err, item) => {
             if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
             else
               return res

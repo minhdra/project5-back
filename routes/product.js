@@ -5,6 +5,7 @@ var verifyToken = require('../middleware/verifyToken');
 
 /* GET users listing. */
 router.get('/getById/:_id', ProductController.getById);
+router.get('/getProductById/:id', ProductController.getProductById);
 router.get('/get-single/:path', ProductController.getByPathClient);
 router.get('/getByPath/:path', ProductController.getByPath);
 router.post('/search', ProductController.search);

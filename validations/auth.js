@@ -4,7 +4,7 @@ const registerValidator = (data) => {
   const rule = Joi.object({
     ...data,
     username: Joi.string()
-      .regex(/^(?:[A-Z\d][A-Z\d_-]{5,10})$/i)
+      .regex(/^(?:[A-Z\d][A-Z\d_-]{5,9})$/i)
       .required()
       .messages({
         'string.pattern.base':
@@ -17,7 +17,7 @@ const registerValidator = (data) => {
         'string.pattern.base': 'Không đúng định dạng email.',
       }),
     password: Joi.string()
-      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,12}$/i)
+      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{5,11}$/i)
       .required()
       .messages({
         'string.pattern.base':
@@ -35,14 +35,14 @@ const changePasswordValidator = (data) => {
   const rule = Joi.object({
     ...data,
     oldPassword: Joi.string()
-      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,12}$/i)
+      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{5,11}$/i)
       .required()
       .messages({
         'string.pattern.base':
           'Mật khẩu phải có độ dài 6-12, gồm cả ký tự, số và ký tự đặc biệt.',
       }),
     newPassword: Joi.string()
-      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{6,12}$/i)
+      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{5,11}$/i)
       .required()
       .messages({
         'string.pattern.base':

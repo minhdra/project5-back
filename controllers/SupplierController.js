@@ -53,11 +53,11 @@ class SupplierController {
           address: req.body.address,
           description: req.body.description,
         });
-        supplier.save((err) => {
+        supplier.save((err, item) => {
           if (err) {
             return res.status(400).json({ message: 'Có lỗi xảy ra!' });
           } else {
-            return res.status(200).json({ message: 'Cập nhật thành công!' });
+            return res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
           }
         });
       });
@@ -74,9 +74,9 @@ class SupplierController {
         supplier.email = req.body.email;
         supplier.address = req.body.address;
         supplier.description = req.body.description;
-        supplier.save((err) => {
+        supplier.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
-          else res.status(200).json({ message: 'Cập nhật thành công!' });
+          else res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
         });
       })
       .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));
@@ -89,7 +89,7 @@ class SupplierController {
       .then((supplier) => {
         if (supplier) {
           supplier.active = false;
-          supplier.save((err) => {
+          supplier.save((err, item) => {
             if (err) return res.status(400).json({ message: 'Có lỗi xảy ra!' });
             else
               return res

@@ -83,6 +83,7 @@ class CustomerController {
           connectFromField: 'user', // Field of array
           connectToField: '_id', // from which field it will match
           as: 'user', // Add or replace field in origin collection
+
         },
       },
     ];
@@ -116,6 +117,7 @@ class CustomerController {
           localField: '_id',
           foreignField: 'customer',
           as: 'orders',
+
         },
       },
     ];
@@ -124,6 +126,7 @@ class CustomerController {
       // .limit(pageSize)
       .then((customers) => {
         customers[0].user = customers[0].user[0];
+        customers[0].orders = customers[0].orders.filter(order => order.active);
         return res.json(customers[0]);
       })
       .catch((err) => res.status(400).json({ message: 'Có lỗi xảy ra!' }));
@@ -145,9 +148,9 @@ class CustomerController {
         customer.phone = req.body.phone;
         customer.carts = req.body.carts;
         customer.delivery_addresses = req.body.delivery_addresses;
-        customer.save((err) => {
+        customer.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
-          else res.status(200).json({ message: 'Cập nhật thành công!' });
+          else res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
         });
       })
       .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));
@@ -169,9 +172,9 @@ class CustomerController {
         customer.phone = req.body.phone;
         customer.carts = req.body.carts;
         customer.delivery_addresses = req.body.delivery_addresses;
-        customer.save((err) => {
+        customer.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
-          else res.status(200).json({ message: 'Cập nhật thành công!' });
+          else res.status(200).json({ data: item, message: 'Cập nhật thành công!' });
         });
       })
       .catch((err) => res.status(422).json({ message: 'Có lỗi xảy ra!' }));

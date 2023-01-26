@@ -74,7 +74,7 @@ class SlideController {
         slide.contentLink = req.body.contentLink;
         slide.backgroundImage = req.body.backgroundImage;
         slide.redirectTo = req.body.redirectTo;
-        slide.save((err) => {
+        slide.save((err, item) => {
           if (err) return res.status(500).json({ message: err.message });
           else res.status(200).json({ message: 'Updated successful!' });
         });
@@ -89,7 +89,7 @@ class SlideController {
       .then((slide) => {
         if (slide) {
           slide.active = false;
-          slide.save((err) => {
+          slide.save((err, item) => {
             if (err) return res.status(400).json('Error deleting slide');
             else
               return res
