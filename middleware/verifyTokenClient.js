@@ -7,7 +7,7 @@ module.exports = (request, response, next) => {
     return response.status(401).json({ message: 'Yêu cầu bị từ chối!' });
 
   try {
-    jwt.verify(token, process.env.CLIENT_TOKEN_SECRET, (err, decoded) => {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
       if (err) {
         return response.status(401).json({ message: 'Yêu cầu bị từ chối!' });
       } else {

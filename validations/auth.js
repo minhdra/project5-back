@@ -34,13 +34,7 @@ const registerValidator = (data) => {
 const changePasswordValidator = (data) => {
   const rule = Joi.object({
     ...data,
-    oldPassword: Joi.string()
-      .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{5,11}$/i)
-      .required()
-      .messages({
-        'string.pattern.base':
-          'Mật khẩu phải có độ dài 6-12, gồm cả ký tự, số và ký tự đặc biệt.',
-      }),
+    oldPassword: Joi.string().required(),
     newPassword: Joi.string()
       .regex(/^(?=.*[0-9])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{5,11}$/i)
       .required()

@@ -10,6 +10,8 @@ const {
 } = require('../validations/auth');
 const { ObjectId } = require('mongodb');
 
+let refreshTokens = [];
+
 class UserController {
   // Get all
   search(req, res) {
@@ -89,24 +91,51 @@ class UserController {
         .status(422)
         .json({ message: 'Tài khoản hoặc mật khẩu không chính xác!' });
 
+    // role 2 is client
     if (
       (req.body.type === 'admin' && user.role === 2) ||
       (req.body.type === 'client' && user.role !== 2) ||
       !req.body.type ||
       (req.body.type !== 'admin' && req.body.type !== 'client')
     )
-      return res.status(422).json({ message: 'Có phải bạn bị lạc?' });
+      return res.status(422).json({ message: 'Thông tin không chính xác!' });
 
-    const tokenSecret =
-      req.body.type === 'admin'
-        ? process.env.ADMIN_TOKEN_SECRET
-        : process.env.CLIENT_TOKEN_SECRET;
-    const token = jwt.sign({ _id: user._id }, tokenSecret, {
-      expiresIn: req.body.type === 'admin' ? 60 * 60 * 24 : 60 * 60 * 24 * 365,
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
+
+    refreshTokens.push(refreshToken);
+    res.cookie('refresh_token', refreshToken, {
+      path: '/',
+      sameSite: 'strict',
     });
-    res.header('auth-token', token);
+
+    const { password, ...others } = user._doc;
+    // res.header('auth-token', token);
     const message = `${user.username} đang đăng nhập...`;
-    return res.status(200).json({ data: user, token, message });
+    return res.status(200).json({ data: { ...others, accessToken }, message });
+  }
+
+  async requestRefreshToken(req, res) {
+    const refreshToken = req.cookies.refresh_token;
+    if (!refreshToken)
+      res.status(401).json({ message: 'Bạn chưa được chứng thực!' });
+    // if (!refreshTokens.includes(refreshToken))
+    //   res.status(401).json({ message: 'Bạn chưa được chứng thực' });
+    refreshTokens = refreshTokens.filter((token) => token !== refreshToken);
+    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+      if (err) res.status(401).json({ message: 'Xin may day!' });
+      else {
+        const newAccessToken = generateAccessToken(user);
+        const newRefreshToken = generateRefreshToken(user);
+        refreshTokens.push(newRefreshToken);
+        res.cookie('refresh_token', newRefreshToken, {
+          path: '/',
+          sameSite: 'strict',
+        });
+
+        return res.status(200).json({ accessToken: newAccessToken });
+      }
+    });
   }
 
   // Register
@@ -203,9 +232,7 @@ class UserController {
     );
 
     if (!checkPassword)
-      return res
-        .status(422)
-        .json({ message: 'Mật khẩu không chính xác!' });
+      return res.status(422).json({ message: 'Mật khẩu không chính xác!' });
     // End check old password
 
     // Start check old password and check new password
@@ -252,6 +279,29 @@ class UserController {
         } else return res.status(404).json({ message: 'Không tìm thấy!' });
       })
       .catch((err) => res.status(404).json({ message: 'Có lỗi xảy ra!' }));
+  }
+
+  // Reset password
+  async resetPassword(req, res) {
+    const myQuery = { email: req.body.email };
+    const user = await User.findOne({ email: myQuery.email });
+    if (!user)
+      return res.status(404).json({ message: 'Không tìm thấy emai này' });
+    const pass = (Math.random() + 1).toString(36).toUpperCase().substring(6);
+
+    const salt = await bcrypt.genSalt(10);
+    const newPassword = await bcrypt.hash(pass, salt);
+
+    user.password = newPassword;
+    user.save((err) => {
+      if (err) return res.status(401).json({ message: 'Có lỗi xảy ra' });
+      return res
+        .status(200)
+        .json({
+          data: { newPass: pass },
+          message: 'Reset mật khẩu thành công',
+        });
+    });
   }
 
   // create user
@@ -358,6 +408,32 @@ function deleteUser(user) {
       }
     });
   }
+}
+
+// Generate access token
+function generateAccessToken(user) {
+  const token = jwt.sign(
+    { _id: user._id, username: user.username, role: user.role },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: '365d',
+    }
+  );
+
+  return token;
+}
+
+// Generate access token
+function generateRefreshToken(user) {
+  const token = jwt.sign(
+    { _id: user._id, username: user.username, role: user.role },
+    process.env.REFRESH_TOKEN_SECRET,
+    {
+      expiresIn: '365d',
+    }
+  );
+
+  return token;
 }
 
 module.exports = new UserController();
