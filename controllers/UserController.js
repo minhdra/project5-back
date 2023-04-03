@@ -101,13 +101,13 @@ class UserController {
       return res.status(422).json({ message: 'Thông tin không chính xác!' });
 
     const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
+    // const refreshToken = generateRefreshToken(user);
 
-    refreshTokens.push(refreshToken);
-    res.cookie('refresh_token', refreshToken, {
-      path: '/',
-      sameSite: 'strict',
-    });
+    // refreshTokens.push(refreshToken);
+    // res.cookie('refresh_token', refreshToken, {
+    //   path: '/',
+    //   sameSite: 'strict',
+    // });
 
     const { password, ...others } = user._doc;
     // res.header('auth-token', token);
