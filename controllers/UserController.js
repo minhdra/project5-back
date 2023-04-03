@@ -100,8 +100,17 @@ class UserController {
     )
       return res.status(422).json({ message: 'Thông tin không chính xác!' });
 
-    const accessToken = generateAccessToken(user);
+    // const accessToken = generateAccessToken(user);
     // const refreshToken = generateRefreshToken(user);
+
+    const userConvert = JSON.parse(JSON.stringify(user));
+    const accessToken = jwt.sign(
+      { _id: userConvert._id, username: userConvert.username, role: userConvert.role },
+      process.env.ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: '365d',
+      }
+    );
 
     // refreshTokens.push(refreshToken);
     // res.cookie('refresh_token', refreshToken, {
@@ -109,7 +118,7 @@ class UserController {
     //   sameSite: 'strict',
     // });
 
-    const { password, ...others } = JSON.parse(JSON.stringify(user));
+    const { password, ...others } = userConvert;
     // res.header('auth-token', token);
     const message = `${user.username} đang đăng nhập...`;
     return res.status(200).json({ data: { ...others, accessToken }, message });
