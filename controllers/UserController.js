@@ -109,10 +109,10 @@ class UserController {
     //   sameSite: 'strict',
     // });
 
-    // const { password, ...others } = user._doc;
+    const { password, ...others } = JSON.parse(JSON.stringify(user));
     // res.header('auth-token', token);
     const message = `${user.username} đang đăng nhập...`;
-    return res.status(200).json({ data: { ...user, accessToken }, message });
+    return res.status(200).json({ data: { ...others, accessToken }, message });
   }
 
   async requestRefreshToken(req, res) {
