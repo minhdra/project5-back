@@ -50,8 +50,12 @@ class CategoryController {
         },
       },
     ]).then((categories) => {
-      // console.log(categories)
-      res.json(categories);
+      if (categories && categories?.length > 0)
+        categories.forEach((category) =>
+          category.subs = category.subs.filter(c => c.active)
+        )
+      
+      return res.json(categories);
     });
   }
 
@@ -76,7 +80,14 @@ class CategoryController {
           as: 'subs',
         },
       },
-    ]).then((categories) => res.json(categories[0]));
+    ]).then((categories) => {
+      if (categories && categories?.length > 0)
+        categories.forEach((category) =>
+          category.subs = category.subs.filter(c => c.active)
+        )
+      
+      return res.json(categories[0]);
+    });
   }
 
   // Get by id
