@@ -91,10 +91,13 @@ class StatisticController {
     const last = await Customer.find(myQueryLast);
     const current = await Customer.find(myQueryCurrent);
 
-    const status = current.length >= last.length ? 'up' : 'down';
-    const percent = ((Math.abs(current.length - last.length) / Math.max(current.length, last.length))*100).toFixed(2);
+    const lengthLast = last.length;
+    const lengthCurrent = current.length;
 
-    return res.status(200).json({ status, percent, data: current.length });
+    const status = lengthCurrent >= lengthLast ? 'up' : 'down';
+    const percent = lengthCurrent===0 && lengthLast===0 ? 0 : ((Math.abs(lengthCurrent - lengthLast) / Math.max(lengthCurrent, lengthLast))*100).toFixed(2);
+
+    return res.status(200).json({ status, percent, data: lengthCurrent });
   }
 
   // Total of current month
@@ -147,7 +150,7 @@ class StatisticController {
     current = current.reduce((prev, curr) => prev + Number(curr.total), 0);
 
     const status = current >= last ? 'up' : 'down';
-    const percent = ((Math.abs(current - last) / Math.max(current, last))*100).toFixed(2);
+    const percent = current===0 && last===0 ? 0 : ((Math.abs(current - last) / Math.max(current, last))*100).toFixed(2);
     return res.status(200).json({ status, percent, data: current });
   }
 
@@ -251,10 +254,13 @@ class StatisticController {
     const last = await Order.find(myQueryLast);
     const current = await Order.find(myQueryCurrent);
 
-    const status = current.length >= last.length ? 'up' : 'down';
-    const percent = ((Math.abs(current.length - last.length) / Math.max(current.length, last.length))*100).toFixed(2);
+    const lengthLast = last.length;
+    const lengthCurrent = current.length;
 
-    return res.status(200).json({ status, percent, data: current.length });
+    const status = lengthCurrent >= lengthLast ? 'up' : 'down';
+    const percent = lengthCurrent===0 && lengthLast===0 ? 0 : ((Math.abs(lengthCurrent - lengthLast) / Math.max(lengthCurrent, lengthLast))*100).toFixed(2);
+
+    return res.status(200).json({ status, percent, data: lengthCurrent });
   }
 }
 
