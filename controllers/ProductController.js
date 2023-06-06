@@ -90,7 +90,12 @@ class ProductController {
       // .skip(page * pageSize - pageSize)
       // .limit(pageSize)
       .then((products) => {
-        products = products.filter(product => product.category_sub[0].active && product.category[0].active);
+        products = products.filter(product => {
+          if (product.category_sub[0])
+            return product.category_sub[0].active && product.category[0].active;
+          else
+            return product.category[0].active;
+        });
 
         products.forEach((item) => {
           item.category_sub = item.category_sub[0];
